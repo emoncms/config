@@ -32,7 +32,7 @@ function config_controller()
         $result = file_get_contents($emonhub_config_file);
     }
     
-    if ($route->action == 'getlog') { 
+    if ($route->action == 'getemonhublog') { 
         $route->format = "text";
         
         ob_start();
