@@ -2,7 +2,8 @@
 
 <br>
 <h3>EmonHub Config Editor</h3>
-<button id="show-logview" style="float:right">Log viewer</button>
+<button id="show-emoncmslogview" style="float:right">emoncms.log view</button>
+<button id="show-emonhublogview" style="float:right">emonhub.log view</button>
 <button id="show-editor" style="float:right">Editor</button>
 
 <div id="editor">
@@ -11,10 +12,16 @@
     <button class="save">Save</button>
 </div>
 
-<div id="logview" style="display:none">
+<div id="emoncmslogview" style="display:none">
     <br><br>
-    <pre id="logviewpre"></pre>
-    <button class="logrefresh">Refresh</button>
+    <pre id="emoncmslogviewpre"></pre>
+    <button class="emoncmslogrefresh">Refresh</button>
+</div>
+
+<div id="emonhublogview" style="display:none">
+    <br><br>
+    <pre id="emonhublogviewpre"></pre>
+    <button class="emonhublogrefresh">Refresh</button>
 </div>
 
 <script>
@@ -38,28 +45,52 @@ $(".save").click(function(){
     $.ajax({ type: "POST", url: path+"config/set", data: "config="+config, async: false, success: function(data){console.log(data);} });
 });
 
-$(".logrefresh").click(function(){
-    log_refresh();
+$(".emonhublogrefresh").click(function(){
+    emonhublog_refresh();
+});
+
+$(".emoncmslogrefresh").click(function(){
+    emoncmslog_refresh();
 });
 
 $("#show-editor").click(function(){
     $("#editor").show();
-    $("#logview").hide();
+    $("#emonhublogview").hide();
+    $("#emoncmslogview").hide();
 });
 
-$("#show-logview").click(function(){
-    log_refresh();
-    $("#logview").show();
+$("#show-emonhublogview").click(function(){
+    emonhublog_refresh();
+    $("#emonhublogview").show();
+    $("#emoncmslogview").hide();
     $("#editor").hide();
 });
 
-function log_refresh()
+$("#show-emoncmslogview").click(function(){
+    emoncmslog_refresh();
+    $("#emonhublogview").hide();
+    $("#emoncmslogview").show();
+    $("#editor").hide();
+});
+
+function emonhublog_refresh()
 {
     $.ajax({ 
-        url: path+"config/getlog", 
+        url: path+"config/getemonhublog", 
         dataType: 'text', async: false, 
         success: function(data) {
-            $("#logviewpre").html(data);
+            $("#emonhublogviewpre").html(data);
+        } 
+    });
+}
+
+function emoncmslog_refresh()
+{
+    $.ajax({ 
+        url: path+"config/getemoncmslog", 
+        dataType: 'text', async: false, 
+        success: function(data) {
+            $("#emoncmslogviewpre").html(data);
         } 
     });
 }
