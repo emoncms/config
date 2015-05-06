@@ -40,6 +40,14 @@ function config_controller()
         $result = trim(ob_get_clean());
     }
     
+    if ($route->action == 'getemoncmslog') { 
+        $route->format = "text";
+        
+        ob_start();
+        passthru("tail -30 /var/log/emoncms.log");
+        $result = trim(ob_get_clean());
+    }
+    
     if ($route->action == 'set' && isset($_POST['config'])) { 
         $route->format = "text";
         $config = $_POST['config'];
