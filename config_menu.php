@@ -1,3 +1,4 @@
 <?php
 
-    $menu_left[] = array('name'=> dgettext($domain, "EmonHub"), 'path'=>"config/view" , 'session'=>"write", 'order' => 0 );
+    $menu_dropdown_config[] = array('name'=> "EmonHub", 'icon'=>'icon-bullhorn', 'path'=>"config/view" , 'session'=>"write", 'order' => 8 );
+
