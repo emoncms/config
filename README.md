@@ -18,4 +18,7 @@ Emoncms, [Emonhub (emon-pi varient)](github.com/openenergymonitor/emonhub) shoul
     
 Check for database updates in Emoncms admin 
 
+## Change permissions on emonhub.conf to allow web user to edit
+
+    sudo chmod 666 /home/pi/data/emonhub.conf
 
