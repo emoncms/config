@@ -5,7 +5,6 @@ pre {
     width:100%;
     height:400px;
     
-    
     margin:0px;
     padding:0px;
     font-size:16px;
@@ -27,19 +26,20 @@ pre {
 
 </style>
 
-<h3>EmonHub Config</h3>
-
-
+<h3>EmonHub</h3>
+Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms
+<br><br>
 <div class="input-prepend input-append" style="float:right">
-    <button class="btn" id="show-emonhublogview">View log</button>
-    <button class="btn" id="download-log">Download log</button>
-    <button class="btn" id="show-editor">Edit config</button>
+    <button class="btn btn-info" id="show-emonhublogview">View log</button>
+     <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-info"><?php echo _('Download log'); ?></a>
+    <button class="btn btn-info" id="show-editor">Edit config</button>
 </div>
 
 <div id="editor">
-    <textarea id="configtextarea" style="width:80%; height:400px"></textarea>
-    <button class="save">Save</button>
-    <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">Documentation</a>
+    <h4>Config:</h4>
+    <textarea id="configtextarea" style="width:100%; height:400px"></textarea><br>
+    <button class="save">Save</button><br><br>
+    <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">Config Documentation</a>
 </div>
 
 <div id="emonhublogview" style="display:none">
@@ -48,9 +48,9 @@ pre {
         <span class="add-on">Auto update log view</span>
         <button class="btn autoupdate-toggle">ON</button>
     </div>
-    
+    <h4>Log:</h4>
     <pre id="emonhublogviewpre"><div id="emonhub-console-log"></div></pre><br>
-
+    <a href="https://github.com/openenergymonitor/emonhub">EmonHub Documentation</a>
 </div>
 
 <script>
@@ -61,6 +61,10 @@ var config = "";
 
 var emonhublog_updater = false;
 var autoupdate = false;
+$("#emonhublogview").show();
+$("#editor").hide();
+emonhublog_refresh();
+enable_autoupdate();
 
 $.ajax({
     url: path+"config/get",
@@ -90,7 +94,6 @@ $(".autoupdate-toggle").click(function(){
 $("#show-editor").click(function(){
     $("#editor").show();
     $("#emonhublogview").hide();
-    $("#emoncmslogview").hide();
     disable_autoupdate();
 });
 
@@ -101,12 +104,6 @@ $("#show-emonhublogview").click(function(){
     $("#editor").hide();
 });
 
-$("#download-log").click(function(){
-    $.ajax({
-        url: path+"config/downloadlog",
-        dataType: 'text', async: false,
-    });
-}
 
 function enable_autoupdate() {
     autoupdate = true;

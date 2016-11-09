@@ -18,7 +18,6 @@ function config_controller()
     $result = false;
     
     $emonhub_config_file = "/home/pi/data/emonhub.conf";
-    $update_logfile = "/home/pi/data/emonpiupdate.log";
     $emonhub_logfile = "/var/log/emonhub/emonhub.log";
     
     if (!$session['write']) return array('content'=>false);
