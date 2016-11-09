@@ -28,8 +28,7 @@ pre {
 </style>
 
 <h3>EmonHub Config</h3>
-<br>
-<a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">Documentation</a>
+
 
 <div class="input-prepend input-append" style="float:right">
     <button class="btn" id="show-emonhublogview">View log</button>
@@ -38,8 +37,9 @@ pre {
 </div>
 
 <div id="editor">
-    <textarea id="configtextarea" style="width:100%; height:600px"></textarea>
+    <textarea id="configtextarea" style="width:80%; height:400px"></textarea>
     <button class="save">Save</button>
+    <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">Documentation</a>
 </div>
 
 <div id="emonhublogview" style="display:none">
@@ -102,13 +102,11 @@ $("#show-emonhublogview").click(function(){
 });
 
 $("#download-log").click(function(){
-    $("#emonhublogview").show();
-    $("#editor").hide();
     $.ajax({
         url: path+"config/downloadlog",
         dataType: 'text', async: false,
-    })
-});
+    });
+}
 
 function enable_autoupdate() {
     autoupdate = true;
