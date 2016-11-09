@@ -3,7 +3,7 @@
 <style>
 pre {
     width:100%;
-    height:600px;
+    height:400px;
     
     
     margin:0px;
@@ -27,8 +27,9 @@ pre {
 
 </style>
 
+<h3>EmonHub Config</h3>
 <br>
-<h3>EmonHub Config Editor</h3>
+<a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">Documentation</a>
 
 <div class="input-prepend input-append" style="float:right">
     <button class="btn" id="show-emonhublogview">View log</button>
@@ -37,7 +38,6 @@ pre {
 </div>
 
 <div id="editor">
-    <button class="save">Save</button><br><br>
     <textarea id="configtextarea" style="width:100%; height:600px"></textarea>
     <button class="save">Save</button>
 </div>
@@ -60,7 +60,6 @@ var path = "<?php echo $path; ?>";
 var config = "";
 
 var emonhublog_updater = false;
-var emoncmslog_updater = false;
 var autoupdate = false;
 
 $.ajax({
@@ -99,31 +98,28 @@ $("#show-emonhublogview").click(function(){
     if (!autoupdate) enable_autoupdate();
     emonhublog_refresh();
     $("#emonhublogview").show();
-    $("#emoncmslogview").hide();
     $("#editor").hide();
 });
 
-$("#show-emoncmslogview").click(function(){
-    if (!autoupdate) enable_autoupdate();
-    emoncmslog_refresh();
-    $("#emonhublogview").hide();
-    $("#emoncmslogview").show();
+$("#download-log").click(function(){
+    $("#emonhublogview").show();
     $("#editor").hide();
+    $.ajax({
+        url: path+"config/downloadlog",
+        dataType: 'text', async: false,
+    })
 });
 
 function enable_autoupdate() {
     autoupdate = true;
     $(".autoupdate-toggle").html("ON");
     emonhublog_updater = setInterval(emonhublog_refresh,1000);
-    emoncmslog_updater = setInterval(emoncmslog_refresh,1000);
 }
 
 function disable_autoupdate() {
     autoupdate = false;
     $(".autoupdate-toggle").html("OFF");
-    clearInterval(emonhublog_updater);
-    clearInterval(emoncmslog_updater);
-}
+    clearInterval(emonhublog_updater);}
 
 function emonhublog_refresh()
 {
@@ -136,16 +132,6 @@ function emonhublog_refresh()
     });
 }
 
-function emoncmslog_refresh()
-{
-    $.ajax({
-        url: path+"config/getemoncmslog",
-        dataType: 'text', async: true,
-        success: function(data) {
-            $("#emoncms-console-log").html(data+"\n\n");
-        }
-    });
-}
 
 
 </script>

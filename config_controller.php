@@ -53,7 +53,7 @@ function config_controller()
         echo "<script type='text/javascript'>alert('$result');</script>";
     }
     
-    if ($route->action == 'download-log')
+    if ($route->action == 'downloadlog')
     {
         header("Content-Type: application/octet-stream");
         header("Content-Transfer-Encoding: Binary");
