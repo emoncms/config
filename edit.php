@@ -34,6 +34,7 @@ pre {
     <button class="btn" id="show-editor">Editor</button>
     <button class="btn" id="show-emonhublogview">emonhub.log view</button>
     <button class="btn" id="show-emoncmslogview">emoncms.log view</button>
+    <button class="btn" id="download-log">Download log</button>
 </div>
 
 <div id="editor">
@@ -74,12 +75,12 @@ var emonhublog_updater = false;
 var emoncmslog_updater = false;
 var autoupdate = false;
 
-$.ajax({ 
-    url: path+"config/get", 
-    dataType: 'text', async: false, 
+$.ajax({
+    url: path+"config/get",
+    dataType: 'text', async: false,
     success: function(data) {
         config = data;
-    } 
+    }
 });
 
 $("#configtextarea").val(config);
@@ -138,23 +139,23 @@ function disable_autoupdate() {
 
 function emonhublog_refresh()
 {
-    $.ajax({ 
-        url: path+"config/getemonhublog", 
-        dataType: 'text', async: true, 
+    $.ajax({
+        url: path+"config/getemonhublog",
+        dataType: 'text', async: true,
         success: function(data) {
             $("#emonhub-console-log").html(data+"\n\n");
-        } 
+        }
     });
 }
 
 function emoncmslog_refresh()
 {
-    $.ajax({ 
-        url: path+"config/getemoncmslog", 
-        dataType: 'text', async: true, 
+    $.ajax({
+        url: path+"config/getemoncmslog",
+        dataType: 'text', async: true,
         success: function(data) {
             $("#emoncms-console-log").html(data+"\n\n");
-        } 
+        }
     });
 }
 
