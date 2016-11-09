@@ -31,10 +31,9 @@ pre {
 <h3>EmonHub Config Editor</h3>
 
 <div class="input-prepend input-append" style="float:right">
-    <button class="btn" id="show-editor">Editor</button>
-    <button class="btn" id="show-emonhublogview">emonhub.log view</button>
-    <button class="btn" id="show-emoncmslogview">emoncms.log view</button>
+    <button class="btn" id="show-emonhublogview">View log</button>
     <button class="btn" id="download-log">Download log</button>
+    <button class="btn" id="show-editor">Edit config</button>
 </div>
 
 <div id="editor">
@@ -43,21 +42,10 @@ pre {
     <button class="save">Save</button>
 </div>
 
-<div id="emoncmslogview" style="display:none">
-
-    <div class="input-prepend input-append">
-        <span class="add-on">Auto update</span>
-        <button class="btn autoupdate-toggle">ON</button>
-    </div>
-    
-    <pre id="emoncmslogviewpre"><div id="emoncms-console-log"></div></pre><br>
-
-</div>
-
 <div id="emonhublogview" style="display:none">
 
     <div class="input-prepend input-append">
-        <span class="add-on">Auto update</span>
+        <span class="add-on">Auto update log view</span>
         <button class="btn autoupdate-toggle">ON</button>
     </div>
     

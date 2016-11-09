@@ -17,9 +17,9 @@ function config_controller()
     global $route, $session;
     $result = false;
     
+    $emonhub_config_file = "/home/pi/data/emonhub.conf";
     $update_logfile = "/home/pi/data/emonpiupdate.log";
     $emonhub_logfile = "/var/log/emonhub/emonhub.log";
-    $emoncms_logfile = "/var/log/emoncms.log";
     
     if (!$session['write']) return array('content'=>false);
      
@@ -36,24 +36,15 @@ function config_controller()
     
     if ($route->action == 'getemonhublog') {
         $route->format = "text";
-        
         ob_start();
         passthru("tail -30 ".$emonhub_logfile);
         $result = trim(ob_get_clean());
     }
     
-    if ($route->action == 'getemoncmslog') {
-        $route->format = "text";
-        
-        ob_start();
-        passthru("tail -30 ".$emoncms_logfile);
-        $result = trim(ob_get_clean());
-    }
     
     if ($route->action == 'set' && isset($_POST['config'])) {
         $route->format = "text";
         $config = $_POST['config'];
-        
         $fh = fopen($emonhub_config_file,"w");
         fwrite($fh,$config);
         fclose($fh);
