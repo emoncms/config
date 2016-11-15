@@ -32,7 +32,7 @@ Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms
 <div class="input-prepend input-append" style="float:right">
     <button class="btn btn-info" id="show-emonhublogview">View log</button>
      <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-info"><?php echo _('Download log'); ?></a>
-    <button class="btn btn-info" id="show-editor">Edit config</button>
+    <button class="btn btn-danger" id="show-editor">Edit config</button>
 </div>
 
 <div id="editor">
