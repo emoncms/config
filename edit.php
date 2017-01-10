@@ -78,7 +78,14 @@ $("#configtextarea").val(config);
 
 $(".save").click(function(){
     config = $("#configtextarea").val();
-    $.ajax({ type: "POST", url: path+"config/set", data: "config="+config, async: false, success: function(data){console.log(data);} });
+    $.ajax({ type: "POST", url: path+"config/set", data: "config="+config, async: false, success: function(data){
+      console.log(data);
+      alert(data);
+    }
+});
+    
+    
+
 });
 
 $(".autoupdate-toggle").click(function(){

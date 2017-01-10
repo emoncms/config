@@ -47,9 +47,7 @@ function config_controller()
         $fh = fopen($emonhub_config_file,"w");
         fwrite($fh,$config);
         fclose($fh);
-        
-        $result = "config saved";
-        echo "<script type='text/javascript'>alert('$result');</script>";
+        $result = "Config Saved";
     }
     
     if ($route->action == 'downloadlog')
