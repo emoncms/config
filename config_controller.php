@@ -73,7 +73,9 @@ function config_controller()
 
   if ($route->action == 'restart')
   {
-    shell_exec('sudo service emonhub restart');
+    shell_exec('sudo /etc/init.d/emonhub restart');
+    // Requires added to /etc/sudoers:
+    // www-data ALL=(ALL) NOPASSWD:/etc/init.d/emonhub restart
   }
 
     return array('content'=>$result);
