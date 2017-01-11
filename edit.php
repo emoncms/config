@@ -31,15 +31,16 @@ Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms
 <br><br>
 <div class="input-prepend input-append" style="float:right">
     <button class="btn btn-info" id="show-emonhublogview">View log</button>
-     <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-info"><?php echo _('Download log'); ?></a>
     <button class="btn btn-danger" id="show-editor">Edit config</button>
+    <button href="<?php echo $path; ?>config/restart" class="btn btn-warning" id="restart">Restart</button>
+
 </div>
 
 <div id="editor">
     <h4>Config:</h4>
     <textarea id="configtextarea" style="width:100%; height:400px"></textarea><br>
-    <button class="save">Save</button><br><br>
-    <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">Config Documentation</a>
+    <button class="btn btn-warning" id="save">Save</button><br><br>
+    <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">EmonHub Config Documentation</a>
 </div>
 
 <div id="emonhublogview" style="display:none">
@@ -50,6 +51,9 @@ Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms
     </div>
     <h4>Log:</h4>
     <pre id="emonhublogviewpre"><div id="emonhub-console-log"></div></pre><br>
+    <div style="float: right;">
+    <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-info">Download Log</a>
+    </div>
     <a href="https://github.com/openenergymonitor/emonhub">EmonHub Documentation</a>
 </div>
 
@@ -76,16 +80,16 @@ $.ajax({
 
 $("#configtextarea").val(config);
 
-$(".save").click(function(){
+$("#save").click(function(){
     config = $("#configtextarea").val();
     $.ajax({ type: "POST", url: path+"config/set", data: "config="+config, async: false, success: function(data){
       console.log(data);
       alert(data);
-    }
+    }});
 });
-    
-    
 
+$("#restart").click(function(){
+  alert('Restarting EmonHub service...')
 });
 
 $(".autoupdate-toggle").click(function(){

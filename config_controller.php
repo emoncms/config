@@ -71,5 +71,10 @@ function config_controller()
         exit;
     }
 
+  if ($route->action == 'restart')
+  {
+    shell_exec('sudo service emonhub restart');
+  }
+
     return array('content'=>$result);
 }
