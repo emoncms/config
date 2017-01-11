@@ -22,3 +22,9 @@ Check for database updates in Emoncms admin
 
     sudo chmod 666 /home/pi/data/emonhub.conf
 
+## Install sudoers entry to allow emonhub to be restarted
+
+```
+sudo cp emonhub-sudoers /etc/sudoers.d/
+sudo chmod 0440 /etc/sudoers.d/emonhub-sudoers
+```
