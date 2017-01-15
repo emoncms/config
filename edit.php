@@ -32,7 +32,6 @@ Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms
 <div class="input-prepend input-append" style="float:right">
     <button class="btn btn-info" id="show-emonhublogview">View log</button>
     <button class="btn btn-danger" id="show-editor">Edit config</button>
-    <!--<button href="<?php echo $path; ?>config/restart" class="btn btn-warning" id="restart">Restart</button>-->
     <button class="btn btn-warning" id="restart">Restart</button>
 
 
@@ -91,10 +90,8 @@ $("#save").click(function(){
 });
 
 $("#restart").click(function(){
-  alert('Restarting EmonHub service...')
-  $.ajax({ type: "POST", url: path+"config/restart", data: "", async: false, success: function(data){
-  console.log('Restarting emonhub...check logfile');
-  }});
+  alert("Restarting EmonHub...");
+  $.ajax({ url: path+"config/restart", dataType: 'text', async: false});
 });
 
 $(".autoupdate-toggle").click(function(){

@@ -71,11 +71,11 @@ function config_controller()
         exit;
     }
 
+  // emonHub restart requires added to /etc/sudoers:
+  // www-data ALL=(ALL) NOPASSWD:/etc/init.d/emonhub restart
   if ($route->action == 'restart')
   {
-    shell_exec('sudo /etc/init.d/emonhub restart');
-    // Requires added to /etc/sudoers:
-    // www-data ALL=(ALL) NOPASSWD:/etc/init.d/emonhub restart
+    exec("sudo /etc/init.d/emonhub restart > /dev/null &");
   }
 
     return array('content'=>$result);
