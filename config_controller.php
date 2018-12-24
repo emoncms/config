@@ -14,7 +14,7 @@
 
 function config_controller()
 {
-    global $route, $session;
+    global $route, $session, $redis;
     $result = false;
     
     $emonhub_config_file = "/home/pi/data/emonhub.conf";
@@ -22,12 +22,27 @@ function config_controller()
     
     if (!$session['write']) return array('content'=>false);
      
-    if ($route->action == 'view') {
+    if ($route->action == '') {
         $route->format = "html";
-        $result = view("Modules/config/edit.php", array());
+        $result = view("Modules/config/view.php", array());
+        return array('content'=>$result, 'fullwidth'=>false);
+    }
+
+    if ($route->action == 'editor') {
+        $route->format = "html";
+        $conf = $redis->get("get:emonhubconf");
+        $result = view("Modules/config/editor.php", array("conf"=>$conf));
         return array('content'=>$result, 'fullwidth'=>false);
     }
     
+    if ($route->action == "setemonhub" && isset($_POST['config'])) {
+        $route->format = "json";
+        $config = json_decode($_POST['config']);
+        if ($config!=null) {
+            $redis->set("set:emonhubconf",json_encode($config));
+        }
+    }
+        
     if ($route->action == 'get') {
         $route->format = "text";
         $result = file_get_contents($emonhub_config_file);
