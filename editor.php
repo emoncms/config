@@ -5,15 +5,7 @@ global $path;
 <link rel="stylesheet" type="text/css" href="style.css" />
 
 <div id="wrapper">
-  <div class="sidenav">
-    <div class="sidenav-inner">
-      <ul class="sidenav-menu">
-          <li><a href="<?php echo $path; ?>config#log">View Log</a></li>
-          <li><a href="<?php echo $path; ?>config#edit">Edit Config</a></li>
-          <li><a href="<?php echo $path; ?>config/editor">EmonHub.Conf Editor</a></li>
-      </ul>
-    </div>
-  </div>
+  <?php include "Modules/config/sidebar.php"; ?>
 
   <div style="height:20px"></div>
 

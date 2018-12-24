@@ -24,15 +24,15 @@ function config_controller()
      
     if ($route->action == '') {
         $route->format = "html";
-        $result = view("Modules/config/view.php", array());
-        return array('content'=>$result, 'fullwidth'=>false);
+        return view("Modules/config/view.php", array());
     }
+
+    // ---------------------------------------------------------
 
     if ($route->action == 'editor') {
         $route->format = "html";
         $conf = $redis->get("get:emonhubconf");
-        $result = view("Modules/config/editor.php", array("conf"=>$conf));
-        return array('content'=>$result, 'fullwidth'=>false);
+        return view("Modules/config/editor.php", array("conf"=>$conf));
     }
     
     if ($route->action == "setemonhub" && isset($_POST['config'])) {
@@ -41,8 +41,40 @@ function config_controller()
         if ($config!=null) {
             $redis->set("set:emonhubconf",json_encode($config));
         }
+        return "ok";
     }
+    
+    // ---------------------------------------------------------
+
+    if ($route->action == 'connect') {
+        $route->format = "html";
+        $conf = $redis->get("get:emonhubconf");
+        return view("Modules/config/connect.php", array("conf"=>$conf));
+    }
+    
+    if ($route->action == 'remoteauth') {
+        $route->format = "json";
+        $host = post("host");
         
+        
+        $result = json_decode(http_request("POST",$host."/user/auth.json",array(
+            "username"=>post("username"),
+            "password"=>post("password")
+        )));
+        
+        if (isset($result->success) && $result->success) {
+            $conf = json_decode($redis->get("get:emonhubconf"));
+            if (isset($conf->interfacers->emoncmsorg)) {
+                $conf->interfacers->emoncmsorg->runtimesettings->apikey = "".$result->apikey_write;
+                $redis->set("set:emonhubconf",json_encode($conf));
+            }
+        }
+        
+        return $result;
+    }
+
+    // ---------------------------------------------------------
+            
     if ($route->action == 'get') {
         $route->format = "text";
         $result = file_get_contents($emonhub_config_file);
