@@ -35,6 +35,12 @@ function config_controller()
         return view("Modules/config/editor.php", array("conf"=>$conf));
     }
     
+    if ($route->action == 'calibration') {
+        $route->format = "html";
+        $conf = $redis->get("get:emonhubconf");
+        return view("Modules/config/calibration.php", array("conf"=>$conf));
+    }
+    
     if ($route->action == "setemonhub" && isset($_POST['config'])) {
         $route->format = "json";
         $config = json_decode($_POST['config']);
