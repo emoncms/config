@@ -63,9 +63,13 @@ select { margin:0px; width:300px; }
 
           <tr v-for="(input,index) in node.rx.unitless" v-if="input=='v'">
             <td>Voltage calibration:</td>
-            <td><select><option>ACAC Ideal Power</option></select></td>
+            <td>
+            <select :id="'input_'+index" @change="passOnSelection($event, node.rx.unitless)">
+              <option :value="device.vcal" v-for="device in devices">{{device.name}}</option>
+            </select>
+            <!-- <select><option>ACAC Ideal Power</option></select></td> -->
             <td><div class="input-prepend input-append">
-              <button class="btn">-</button>
+              <button class="btn" @mousedown="waitForLongPress(node.rx, false)" @mouseup="stopLongPress" @mouseleave="stopLongPress">-</button>
               <input type="text" style="width:70px" v-model="node.rx.vcal" />
               <button class="btn">+</button>
             </div></td>
@@ -104,7 +108,7 @@ select { margin:0px; width:300px; }
 init_sidebar({menu_element:"#config_menu"});
 
 var path = "<?php echo $path; ?>";
-var conf = <?php echo $conf; ?>;
+var conf = <?php echo !empty($conf) ? $conf: '{}'; ?>;
 
 var tmp = {};
 for (var n in conf.nodes) {
@@ -117,7 +121,23 @@ console.log(JSON.parse(JSON.stringify(conf)));
 
 var app = new Vue({
   el: '#conf',
-  data: { conf: conf, live: "hello" },
+  data: { 
+    conf: conf,
+    live: "hello",
+    step: .1,
+    pressTimer: null,
+    holdTimer: null,
+    devices: [
+      {id: 'custom', name: 'Custom'},
+      {id: 'device_1', name: 'ACAC Ideal Power', vcal: 266.41},
+      {id: 'device_2', name: 'Avacado',vcal: 1.2},
+      {id: 'device_3', name: 'Carrot', vcal: 1.8},
+      {id: 'device_4', name: 'Onion',  vcal: 1.9},
+      {id: 'device_5', name: 'Tomato', vcal: 2.1},
+      {id: 'device_6', name: 'Squash', vcal: 2.5},
+      {id: 'device_7', name: 'Garlic', vcal: 2.8}
+    ]
+  },
   filters: {
     dp2: function(value) {
       return value.toFixed(2);
@@ -129,7 +149,72 @@ var app = new Vue({
     },
     list_format_value: function(value) {
       return list_format_value(value)
+    },
+    increase: function(input) {
+      this.stepOffset(input, true);
+    },
+    decrease: function(input) {
+      this.stepOffset(input, false);
+    },
+    setOffset: function(input, value) {
+      input.vcal = Number(value).toFixed(1);
+      this.checkDropdown(input);
+    },
+    stepOffset: function(input, isIncrement) {
+      var _step = Math.abs(this.step);
+      var step = isIncrement ? _step: 0 - _step;
+      var offset = parseFloat(input.offset);
+      this.setOffset(input, offset + step);
+    },
+    waitForLongPress: function(input, isIncrement){
+      var vm = this;
+      this.stepOffset(input, isIncrement);
+      this.pressTimer = setTimeout(function(){
+        vm.startLongPress(input, isIncrement);
+      }, 600)
+    },
+    startLongPress: function(input, isIncrement){
+      var vm = this;
+      this.holdTimer = setInterval(function(){
+        vm.stepOffset(input, isIncrement)
+      }, 50);
+    },
+    stopLongPress: function(){
+      clearTimeout(this.pressTimer);
+      clearInterval(this.holdTimer);
+      this.pressTimer = null;
+      this.holdTimer = null;
+    },
+    checkAllDropdowns: function(){
+      for(n in this.inputs) {
+        let input = this.inputs[n];
+        this.checkDropdown(input);
+      }
+    },
+    checkDropdown: function(input) {
+      var select = document.querySelector('#input_'+input.nodeid);
+      if (select) {
+        var opts = select.options;
+        var val = Number(input.vcal).toFixed(2);
+        for (var opt, j = 0; opt = opts[j]; j++) {
+          if (Number(opt.value).toFixed(2) == val) {
+            select.selectedIndex = j;
+            break;
+          } else {
+            select.selectedIndex = 0;
+          }
+        }
+      }
+    },
+    passOnSelection: function(event, input) {
+        console.log('emrys',event.type,input);
+      var select = event.target;
+      var value = select.options[select.selectedIndex].value
+      this.setOffset(input, value)
     }
+  },
+  mounted:function(){
+    this.checkAllDropdowns();
   }
 });
 
