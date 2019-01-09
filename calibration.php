@@ -60,18 +60,26 @@ select { margin:0px; width:300px; }
             <th>Value</th>
             <th>Time</th>
           </tr>
-
           <tr v-for="(input,index) in node.rx.unitless" v-if="input=='v'">
             <td>Voltage calibration:</td>
             <td>
-            <select :id="'input_'+index" @change="passOnSelection($event, node.rx.unitless)">
-              <option :value="device.vcal" v-for="device in devices">{{device.name}}</option>
+            <select :id="['input',node.nodename,index].join('_')" 
+              @change="passOnSelection($event, node.rx)">
+              <option v-for="device in preset_vcals" :value="device.vcal">
+                {{device.name}}
+              </option>
             </select>
             <!-- <select><option>ACAC Ideal Power</option></select></td> -->
             <td><div class="input-prepend input-append">
-              <button class="btn" @mousedown="waitForLongPress(node.rx, false)" @mouseup="stopLongPress" @mouseleave="stopLongPress">-</button>
-              <input type="text" style="width:70px" v-model="node.rx.vcal" />
-              <button class="btn">+</button>
+              <button class="btn" 
+                @mousedown="waitForLongPress(node.rx, false)" 
+                @mouseup="stopLongPress" 
+                @mouseleave="stopLongPress">-</button>
+              <input v-model="node.rx.vcal" type="text" style="width:70px">
+              <button class="btn" 
+                @mousedown="waitForLongPress(node.rx, true)" 
+                @mouseup="stopLongPress" 
+                @mouseleave="stopLongPress">+</button>
             </div></td>
             <td></td>
             <td><span v-if="typeof live[node.nodename]!=='undefined'" v-html="list_format_value(live[node.nodename][node.rx.names[index]].value)"></span>{{ node.rx.units[index] }}</td>
@@ -80,7 +88,11 @@ select { margin:0px; width:300px; }
           
           <tr v-for="(input,index) in node.rx.unitless" v-if="input=='rp'">
             <td>{{ node.rx.names[index] }}</td>
-            <td><select><option>SCT-013-000: 2000 turns, 22R burden</option><option>SCT-013-000: 2000 turns, 100R burden</option></select></td>
+            <td>
+	    <select :id="'input_'+index">
+              <option v-for="device in preset_icals" :value="device.id">{{device.name}}</option>
+            </select>
+<!--<select><option>SCT-013-000: 2000 turns, 22R burden</option><option>SCT-013-000: 2000 turns, 100R burden</option></select></td>-->
             <td><div class="input-prepend input-append">
               <button class="btn">-</button>
               <input type="text" style="width:70px" v-model="node.rx.icals[index]" />
@@ -127,7 +139,7 @@ var app = new Vue({
     step: .1,
     pressTimer: null,
     holdTimer: null,
-    devices: [
+    preset_vcals: [
       {id: 'custom', name: 'Custom'},
       {id: 'device_1', name: 'ACAC Ideal Power', vcal: 266.41},
       {id: 'device_2', name: 'Avacado',vcal: 1.2},
@@ -136,6 +148,11 @@ var app = new Vue({
       {id: 'device_5', name: 'Tomato', vcal: 2.1},
       {id: 'device_6', name: 'Squash', vcal: 2.5},
       {id: 'device_7', name: 'Garlic', vcal: 2.8}
+    ],
+    preset_icals: [
+      {id: 'custom', name: 'Custom'},
+      {id: 'SCT-013-000-22R', name: 'SCT-013-000: 2000 turns, 22R burden'},
+      {id: 'SCT-013-000-100R', name: 'SCT-013-000: 2000 turns, 100R burden'},
     ]
   },
   filters: {
@@ -157,8 +174,8 @@ var app = new Vue({
       this.stepOffset(input, false);
     },
     setOffset: function(input, value) {
-      input.vcal = Number(value).toFixed(1);
-      this.checkDropdown(input);
+      input.vcal = Number(value).toFixed(2);
+      //this.checkDropdown(input);
     },
     stepOffset: function(input, isIncrement) {
       var _step = Math.abs(this.step);
@@ -186,19 +203,28 @@ var app = new Vue({
       this.holdTimer = null;
     },
     checkAllDropdowns: function(){
-      for(n in this.inputs) {
-        let input = this.inputs[n];
-        this.checkDropdown(input);
+        console.log('checkAllDropdowns()')
+      for (i in this.conf.nodes) {
+        var node = this.conf.nodes[i];
+        for (let j in node.rx.unitless) {
+          let input = node.rx.unitless[j];
+          this.checkDropdown(node, j);
+        }
       }
     },
-    checkDropdown: function(input) {
-      var select = document.querySelector('#input_'+input.nodeid);
+    checkDropdown: function(node, index) {
+      var select = document.querySelector('#'+['input',node.nodename,index].join('_'));
       if (select) {
-        var opts = select.options;
-        var val = Number(input.vcal).toFixed(2);
-        for (var opt, j = 0; opt = opts[j]; j++) {
-          if (Number(opt.value).toFixed(2) == val) {
-            select.selectedIndex = j;
+        var val = node.vcal ? Number(node.vcal).toFixed(2): 0;
+        console.log(2, 'checkDropdown()', node.nodename, index, select, select.options)
+        
+        for(i=0;i<select.options.length;i++){
+            console.log('test2',i)
+        }
+        for(i in [1,2,3]) {
+            console.log('i=',i,select.options.length);
+          if (Number(select.options[i].value).toFixed(2) == val) {
+            select.selectedIndex = i;
             break;
           } else {
             select.selectedIndex = 0;
@@ -207,14 +233,17 @@ var app = new Vue({
       }
     },
     passOnSelection: function(event, input) {
-        console.log('emrys',event.type,input);
       var select = event.target;
       var value = select.options[select.selectedIndex].value
       this.setOffset(input, value)
     }
   },
-  mounted:function(){
-    this.checkAllDropdowns();
+  mounted: function(){
+    //this.checkAllDropdowns();
+    // use this callback every time dom is updated (nextTick)...
+    this.$nextTick(function(){
+        this.checkAllDropdowns();
+    });
   }
 });
 
