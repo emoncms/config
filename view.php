@@ -1,5 +1,4 @@
 <?php global $path; ?>
-
 <style>
 pre {
     width:100%;
@@ -25,40 +24,48 @@ pre {
 }
 
 </style>
+<div id="wrapper">
+  <?php include "Modules/config/sidebar.php"; ?>
+  
+  <div style="height:20px"></div>
 
-<h3>EmonHub</h3>
-Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms
-<br><br>
-<div class="input-prepend input-append" style="float:right">
-    <button class="btn btn-info" id="show-emonhublogview">View log</button>
-    <button class="btn btn-danger" id="show-editor">Edit config</button>
-    <button class="btn btn-warning" id="restart">Restart</button>
+  <h3>EmonHub</h3>
+  Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms
+  <br><br>
+  <div class="input-prepend input-append" style="float:right">
+      <button class="btn btn-info" id="show-emonhublogview">View log</button>
+      <button class="btn btn-danger" id="show-editor">Edit config</button>
+      <button class="btn btn-warning" id="restart">Restart</button>
+  </div>
 
+  <div id="editor">
+      <h4>Config:</h4>
+      <textarea id="configtextarea" style="width:100%; height:400px"></textarea><br>
+      <button class="btn btn-warning" id="save">Save</button><br><br>
+      <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">EmonHub Config Documentation</a>
+  </div>
 
+  <div id="emonhublogview" style="display:none">
+
+      <div class="input-prepend input-append">
+          <span class="add-on">Auto update log view</span>
+          <button class="btn autoupdate-toggle">ON</button>
+      </div>
+      <h4>Log:</h4>
+      <pre id="emonhublogviewpre"><div id="emonhub-console-log"></div></pre><br>
+      <div style="float: right;">
+      <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-info">Download Log</a>
+      </div>
+      <a href="https://github.com/openenergymonitor/emonhub">EmonHub Documentation</a>
+  </div>
+  
 </div>
 
-<div id="editor">
-    <h4>Config:</h4>
-    <textarea id="configtextarea" style="width:100%; height:400px"></textarea><br>
-    <button class="btn btn-warning" id="save">Save</button><br><br>
-    <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">EmonHub Config Documentation</a>
-</div>
-
-<div id="emonhublogview" style="display:none">
-
-    <div class="input-prepend input-append">
-        <span class="add-on">Auto update log view</span>
-        <button class="btn autoupdate-toggle">ON</button>
-    </div>
-    <h4>Log:</h4>
-    <pre id="emonhublogviewpre"><div id="emonhub-console-log"></div></pre><br>
-    <div style="float: right;">
-    <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-info">Download Log</a>
-    </div>
-    <a href="https://github.com/openenergymonitor/emonhub">EmonHub Documentation</a>
-</div>
+<script type="text/javascript" src="<?php echo $path; ?>Lib/misc/sidebar.js"></script>
+<link rel="stylesheet" href="<?php echo $path; ?>Lib/misc/sidebar.css">
 
 <script>
+init_sidebar({menu_element:"#config_menu"});
 
 var path = "<?php echo $path; ?>";
 
