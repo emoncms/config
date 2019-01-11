@@ -39,7 +39,7 @@
 select { margin:0px; width:300px; }
 
 .fade-enter-active, .fade-leave-active {
-  transition: opacity .5s;
+  transition: all .5s;
 }
 .fade-enter, .fade-leave-to {
   opacity: 0;
@@ -47,19 +47,35 @@ select { margin:0px; width:300px; }
 .fade-enter-to, .fade-leave {
   opacity: 1;
 }
-
+#status{
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2.5rem;
+    overflow: hidden;
+    z-index: 1030;
+    width: 100%;
+    text-align: center;
+    color: white;
+    line-height: 2.5rem;
+}
+#status.fade-enter-to, #status.fade-leave {
+    height: 2.5rem;
+}
+#status.fade-enter, #status.fade-to {
+    height: 0;
+}
 </style>
 
 <div id="wrapper">
   <?php include "Modules/config/sidebar.php"; ?>
 
   <div id="conf">
-    <h2 style="margin-top:30px">Calibration</h2>
-    <p>Adjust calibration for nodes running unitless firmware. 
     <transition name="fade">
-        <strong v-if="status!=''">{{status}}</strong>
+        <div id="status" v-if="status!=''"><strong>{{status}}</strong></div>
     </transition>
-    </p>
+    <h2 style="margin-top:2.5rem">Calibration</h2>
+    <p>Adjust calibration for nodes running unitless firmware.</p>
     <div class='section' v-for="(node,nodeid) in conf.nodes">
       <div class='section-heading' :data-name='nodeid' @click="toggle">
       <strong>{{ nodeid }}:{{ node.nodename }}</strong>
@@ -83,7 +99,6 @@ select { margin:0px; width:300px; }
                 {{device.name}}
               </option>
             </select>
-            <!-- <select><option>ACAC Ideal Power</option></select></td> -->
             <td><div class="input-prepend input-append">
               <button class="btn" 
                 @mousedown="waitForLongPress_vcal(node, false)" 
@@ -102,6 +117,7 @@ select { margin:0px; width:300px; }
           <tr v-for="(input,index) in node.rx.unitless" v-if="input=='rp'">
             <td>{{ node.rx.names[index] }}</td>
             <td>
+            {{['input',node.nodename,index].join('_')}}
             <select :id="['input',node.nodename,index].join('_')" 
               @change="passOnSelection_ical($event, node, index)">
               <option v-for="device in preset_icals" :value="device.ical">{{device.name}}</option>
@@ -112,7 +128,7 @@ select { margin:0px; width:300px; }
                     @mousedown="waitForLongPress_ical(node, false, index)" 
                     @mouseup="stopLongPress" 
                     @mouseleave="stopLongPress">-</button>
-                <input class="span4" id="appendedInputButtons" type="text"  v-model="node.rx.icals[index]">
+                <input class="span4" type="text"  v-model="node.rx.icals[index]">
                 <button class="btn" type="button"
                     @mousedown="waitForLongPress_ical(node, true, index)" 
                     @mouseup="stopLongPress" 
@@ -203,10 +219,12 @@ var app = new Vue({
       }
     },
     set_ical: function(node, value, index) {
-      if(node.rx.icals) {
-        node.rx.icals[index] = Number(value).toFixed(2);
+      // icals not vuejs reactive ? not sure why - fixed by assiging a new array
+        var icals = node.rx.icals;
+        icals[index] = Number(value).toFixed(2);
+        node.rx.icals = Object.assign([], node.rx.icals, icals);
+        // check dropdown for matching value.
         this.check_ical_select(node, index);
-      }
     },
     step_vcal: function(node, isIncrement) {
       var _step = Math.abs(this.step);
@@ -217,8 +235,8 @@ var app = new Vue({
     step_ical: function(node, isIncrement, index) {
       var _step = Math.abs(this.step);
       var step = isIncrement ? _step: 0 - _step;
-      var offset = parseFloat(node.rx.vcal);
-      this.set_ical(node, offset + step, index);
+      var value = parseFloat(node.rx.icals[index]);
+      this.set_ical(node, value + step, index);
     },
     waitForLongPress_vcal: function(node, isIncrement){
       var vm = this;
@@ -256,11 +274,14 @@ var app = new Vue({
       for (i in this.conf.nodes) {
         var node = this.conf.nodes[i];
         this.check_vcal_select(node);
+        for (var j = 0; j < node.rx.icals.length; j++) {
+            this.check_ical_select(node, j);
+        }
       }
     },
     check_vcal_select: function(node) {
       var index = node.rx.unitless.indexOf('v');
-      var select = document.querySelector('#'+['input',node.nodename, index].join('_'));
+      var select = document.querySelector('#' + ['input', node.nodename, index].join('_'));
       if (select) {
         var val = node.rx.vcal ? Number(node.rx.vcal).toFixed(2): 0;
         for(i = 0; i < select.options.length; i++){
@@ -277,11 +298,12 @@ var app = new Vue({
     },
     check_ical_select: function(node, index) {
       var select = document.querySelector('#'+['input',node.nodename, index].join('_'));
+      var icals = node.rx.icals;
       if (select) {
-        var val = node.rx.vcal ? Number(node.rx.vcal).toFixed(2): 0;
-        for(i = 0; i < select.options.length; i++){
-            let option = select.options[i];
-            let option_value = Number(option.value).toFixed(2);
+        for(var i = 0; i < select.options.length; i++){
+            var val = icals[index] ? Number(icals[index]).toFixed(2): 0;
+            var option = select.options[i];
+            var option_value = Number(option.value).toFixed(2);
             if (option_value == val) {
                 select.selectedIndex = i;
                 break;
@@ -323,7 +345,7 @@ var app = new Vue({
         var vm = this;
         setTimeout(function () {
             vm.status = ''
-        }, 2500)
+        }, 3000)
     },
     toggle: function(event) {
         let section = document.querySelector('.section-content[data-name="'+event.target.dataset.name+'"]')
