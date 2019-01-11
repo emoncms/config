@@ -64,7 +64,7 @@ select { margin:0px; width:300px; }
             <td>Voltage calibration:</td>
             <td>
             <select :id="['input',node.nodename,index].join('_')" 
-              @change="passOnSelection($event, node)">
+              @change="passOnSelection_vcal($event, node)">
               <option v-for="device in preset_vcals" :value="device.vcal">
                 {{device.name}}
               </option>
@@ -72,12 +72,12 @@ select { margin:0px; width:300px; }
             <!-- <select><option>ACAC Ideal Power</option></select></td> -->
             <td><div class="input-prepend input-append">
               <button class="btn" 
-                @mousedown="waitForLongPress(node, false)" 
+                @mousedown="waitForLongPress_vcal(node, false)" 
                 @mouseup="stopLongPress" 
                 @mouseleave="stopLongPress">-</button>
-              <input v-model="node.rx.vcal" type="text" style="width:70px">
+              <input class="span4" v-model="node.rx.vcal" type="text">
               <button class="btn" 
-                @mousedown="waitForLongPress(node, true)" 
+                @mousedown="waitForLongPress_vcal(node, true)" 
                 @mouseup="stopLongPress" 
                 @mouseleave="stopLongPress">+</button>
             </div></td>
@@ -85,22 +85,29 @@ select { margin:0px; width:300px; }
             <td><span v-if="typeof live[node.nodename]!=='undefined'" v-html="list_format_value(live[node.nodename][node.rx.names[index]].value)"></span>{{ node.rx.units[index] }}</td>
             <td><span v-if="typeof live[node.nodename]!=='undefined'" v-html="list_format_updated(live[node.nodename][node.rx.names[index]].time)"></span></td>
           </tr>
-          
           <tr v-for="(input,index) in node.rx.unitless" v-if="input=='rp'">
             <td>{{ node.rx.names[index] }}</td>
             <td>
-	    <select :id="'input_'+index">
-              <option v-for="device in preset_icals" :value="device.id">{{device.name}}</option>
+            <select :id="['input',node.nodename,index].join('_')" 
+              @change="passOnSelection_ical($event, node, index)">
+              <option v-for="device in preset_icals" :value="device.ical">{{device.name}}</option>
             </select>
-<!--<select><option>SCT-013-000: 2000 turns, 22R burden</option><option>SCT-013-000: 2000 turns, 100R burden</option></select></td>-->
+            <td>
+              <div class="input-prepend input-append">
+                <button class="btn" type="button"
+                    @mousedown="waitForLongPress_ical(node, false, index)" 
+                    @mouseup="stopLongPress" 
+                    @mouseleave="stopLongPress">-</button>
+                <input class="span4" id="appendedInputButtons" type="text"  v-model="node.rx.icals[index]">
+                <button class="btn" type="button"
+                    @mousedown="waitForLongPress_ical(node, true, index)" 
+                    @mouseup="stopLongPress" 
+                    @mouseleave="stopLongPress">+</button>
+              </div>
+            </td>
             <td><div class="input-prepend input-append">
               <button class="btn">-</button>
-              <input type="text" style="width:70px" v-model="node.rx.icals[index]" />
-              <button class="btn">+</button>
-            </div></td>
-            <td><div class="input-prepend input-append">
-              <button class="btn">-</button>
-              <input type="text" style="width:70px" v-model="node.rx.phase_shifts[index]" />
+              <input type="text" class="span4" v-model="node.rx.phase_shifts[index]">
               <button class="btn">+</button>
             </div></td>
             <td><span v-if="typeof live[node.nodename]!=='undefined'" v-html="list_format_value(live[node.nodename][node.rx.names[index]].value)"></span>{{ node.rx.units[index] }}</td>
@@ -129,7 +136,7 @@ for (var n in conf.nodes) {
     }
 }
 conf.nodes = tmp;
-console.log(JSON.parse(JSON.stringify(conf)));
+// console.log(JSON.parse(JSON.stringify(conf)));
 
 var app = new Vue({
   el: '#conf',
@@ -151,8 +158,8 @@ var app = new Vue({
     ],
     preset_icals: [
       {id: 'custom', name: 'Custom'},
-      {id: 'SCT-013-000-22R', name: 'SCT-013-000: 2000 turns, 22R burden'},
-      {id: 'SCT-013-000-100R', name: 'SCT-013-000: 2000 turns, 100R burden'},
+      {id: 'SCT-013-000-22R', ical: 90.1, name: 'SCT-013-000: 2000 turns, 22R burden'},
+      {id: 'SCT-013-000-100R', ical: 90.3, name: 'SCT-013-000: 2000 turns, 100R burden'},
     ]
   },
   filters: {
@@ -179,23 +186,48 @@ var app = new Vue({
         this.check_vcal_select(node);
       }
     },
+    set_ical: function(node, value, index) {
+      if(node.rx.icals) {
+        node.rx.icals[index] = Number(value).toFixed(2);
+        this.check_ical_select(node, index);
+      }
+    },
     step_vcal: function(node, isIncrement) {
       var _step = Math.abs(this.step);
       var step = isIncrement ? _step: 0 - _step;
       var offset = parseFloat(node.rx.vcal);
       this.set_vcal(node, offset + step);
     },
-    waitForLongPress: function(node, isIncrement){
+    step_ical: function(node, isIncrement, index) {
+      var _step = Math.abs(this.step);
+      var step = isIncrement ? _step: 0 - _step;
+      var offset = parseFloat(node.rx.vcal);
+      this.set_ical(node, offset + step, index);
+    },
+    waitForLongPress_vcal: function(node, isIncrement){
       var vm = this;
       this.step_vcal(node, isIncrement);
       this.pressTimer = setTimeout(function(){
-        vm.startLongPress(node, isIncrement);
-      }, 600)
+        vm.startLongPress_vcal(node, isIncrement);
+      }, 600);
     },
-    startLongPress: function(node, isIncrement){
+    startLongPress_vcal: function(node, isIncrement, index){
       var vm = this;
       this.holdTimer = setInterval(function(){
-        vm.step_vcal(node, isIncrement)
+        vm.step_vcal(node, isIncrement, index)
+      }, 50);
+    },
+    waitForLongPress_ical: function(node, isIncrement, index){
+      var vm = this;
+      this.step_ical(node, isIncrement, index);
+      this.pressTimer = setTimeout(function(){
+        vm.startLongPress_ical(node, isIncrement, index);
+      }, 600);
+    },
+    startLongPress_ical: function(node, isIncrement){
+      var vm = this;
+      this.holdTimer = setInterval(function(){
+        vm.step_ical(node, isIncrement)
       }, 50);
     },
     stopLongPress: function(){
@@ -215,27 +247,64 @@ var app = new Vue({
       var select = document.querySelector('#'+['input',node.nodename, index].join('_'));
       if (select) {
         var val = node.rx.vcal ? Number(node.rx.vcal).toFixed(2): 0;
-        for(i=0;i<select.options.length;i++){
+        for(i = 0; i < select.options.length; i++){
             let option = select.options[i];
             let option_value = Number(option.value).toFixed(2);
             if (option_value == val) {
                 select.selectedIndex = i;
+                break;
+            } else {
+                select.selectedIndex = 0;
             }
         }
       }
     },
-    passOnSelection: function(event, node) {
+    check_ical_select: function(node, index) {
+      var select = document.querySelector('#'+['input',node.nodename, index].join('_'));
+      if (select) {
+        var val = node.rx.vcal ? Number(node.rx.vcal).toFixed(2): 0;
+        for(i = 0; i < select.options.length; i++){
+            let option = select.options[i];
+            let option_value = Number(option.value).toFixed(2);
+            if (option_value == val) {
+                select.selectedIndex = i;
+                break;
+            } else {
+                select.selectedIndex = 0;
+            }
+        }
+      }
+    },
+    passOnSelection_vcal: function(event, node) {
       var select = event.target;
       var value = select.options[select.selectedIndex].value
       this.set_vcal(node, value)
+    },
+    passOnSelection_ical: function(event, node, index) {
+      var select = event.target;
+      var value = select.options[select.selectedIndex].value
+      this.set_ical(node, value, index)
     }
   },
   mounted: function(){
-    //this.checkAllDropdowns();
+    this.checkAllDropdowns();
     // use this callback every time dom is updated (nextTick)...
     this.$nextTick(function(){
-        this.checkAllDropdowns();
+        // this.checkAllDropdowns();
     });
+  },
+  watch: {
+      // watch for changes in the conf obj
+      conf: {
+          handler: function(newVal, oldVal){
+            $.post(path+"config/setemonhub", {config: JSON.stringify(newVal)}, function(response){ 
+                if(response==='ok') {
+                    // all good - data saved
+                }
+            });
+          },
+          deep: true
+      }
   }
 });
 
@@ -244,18 +313,10 @@ $("#conf").on('click',".section-heading",function(){
   $(".section-content[name='"+name+"']").toggle(); 
 });
 
-$("#conf").on("change","input",function() {
-  var appconf = JSON.parse(JSON.stringify(app.$data.conf));
-  console.log("change");
-  $.ajax({ type: "POST", url: path+"config/setemonhub", data: "config="+JSON.stringify(appconf), async: false, success: function(data){ 
-  // --- 
-  }});
-});
-
 update();
 setInterval(update,5000);
 function update(){
-    $.ajax({ type: "GET", url: path+"input/get", async: false, success: function(result){ 
+    $.ajax({ type: "GET", url: path+"input/get", success: function(result){ 
         app.live = result;
     }});
 }
