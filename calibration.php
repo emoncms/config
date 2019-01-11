@@ -38,20 +38,34 @@
 .input-prepend { margin:0px }
 select { margin:0px; width:300px; }
 
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+.fade-enter-to, .fade-leave {
+  opacity: 1;
+}
+
 </style>
 
 <div id="wrapper">
   <?php include "Modules/config/sidebar.php"; ?>
 
-  <div style="height:20px"></div>
-
   <div id="conf">
-    <h2>Calibration</h2>
-    <p>Adjust calibration for nodes running unitless firmware.</p>
+    <h2 style="margin-top:30px">Calibration</h2>
+    <p>Adjust calibration for nodes running unitless firmware. 
+    <transition name="fade">
+        <strong v-if="status!=''">{{status}}</strong>
+    </transition>
+    </p>
     <div class='section' v-for="(node,nodeid) in conf.nodes">
-      <div class='section-heading' v-bind:name='nodeid'><b>{{ nodeid }}:{{ node.nodename }}</b></div>
+      <div class='section-heading' :data-name='nodeid' @click="toggle">
+      <strong>{{ nodeid }}:{{ node.nodename }}</strong>
+      </div>
       <div style="padding:5px">
-        <table class='section-content' v-bind:name='nodeid'>
+        <table class='section-content' :data-name='nodeid'>
           <tr>
             <th>Name</th>
             <th></th>
@@ -112,7 +126,7 @@ select { margin:0px; width:300px; }
             </div></td>
             <td><span v-if="typeof live[node.nodename]!=='undefined'" v-html="list_format_value(live[node.nodename][node.rx.names[index]].value)"></span>{{ node.rx.units[index] }}</td>
             <td><span v-if="typeof live[node.nodename]!=='undefined'" v-html="list_format_updated(live[node.nodename][node.rx.names[index]].time)"></span></td>
-          </tr>       
+          </tr>
         </table>
       </div>
     </div>
@@ -146,6 +160,8 @@ var app = new Vue({
     step: .1,
     pressTimer: null,
     holdTimer: null,
+    save_timeout: void 0,
+    status: '', 
     preset_vcals: [
       {id: 'custom', name: 'Custom'},
       {id: 'device_1', name: 'ACAC Ideal Power', vcal: 266.41},
@@ -284,7 +300,75 @@ var app = new Vue({
       var select = event.target;
       var value = select.options[select.selectedIndex].value
       this.set_ical(node, value, index)
+    },
+    debounced_save: function(data) {
+        var wait = 400;
+        var vm = this;
+        clearTimeout(this.timeout);
+        this.timeout = setTimeout(function () {
+            vm.save(data);
+         }, wait);
+    },
+    save: function(data){
+        var vm = this;
+        $.post(path+"config/setemonhub", {config: JSON.stringify(data)}, function(response){ 
+            if(response==='ok') {
+                // all good - data saved
+                vm.updateStatus('Changes Saved');
+            }
+        });
+    },
+    updateStatus: function(status){
+        this.status = 'Changes Saved';
+        var vm = this;
+        setTimeout(function () {
+            vm.status = ''
+        }, 2500)
+    },
+    toggle: function(event) {
+        let section = document.querySelector('.section-content[data-name="'+event.target.dataset.name+'"]')
+        $(section).toggle();
+    },
+    list_format_updated: function(time) {
+        time = time * 1000;
+        var servertime = new Date().getTime(); // - table.timeServerLocalOffset;
+        var update = new Date(time).getTime();
+        
+        var secs = (servertime - update) / 1000;
+        var mins = secs / 60;
+        var hour = secs / 3600;
+        var day = hour / 24;
+        
+        var updated = secs.toFixed(0) + "s";
+        if (update == 0 || !$.isNumeric(secs)) updated = "n/a";
+        else if (secs < 0) updated = secs.toFixed(0) + "s";
+        // update time ahead of server date is signal of slow network
+        else if (secs.toFixed(0) == 0) updated = "now";
+        else if (day > 7) updated = "inactive";
+        else if (day > 2) updated = day.toFixed(1) + " days";
+        else if (hour > 2) updated = hour.toFixed(0) + " hrs";
+        else if (secs > 180) updated = mins.toFixed(0) + " mins";
+        
+        secs = Math.abs(secs);
+        var color = "rgb(255,0,0)";
+        if (secs < 25) color = "rgb(50,200,50)";
+        else if (secs < 60) color = "rgb(240,180,20)";
+        else if (secs < 3600 * 2) color = "rgb(255,125,20)";
+        
+        return "<span style='color:" + color + ";'>" + updated + "</span>";
+    },
+    list_format_value: function(value) {
+        if (value == null) return "NULL";
+        value = parseFloat(value);
+        if (value >= 1000) value = parseFloat(value.toFixed(0));
+        else if (value >= 100) value = parseFloat(value.toFixed(1));
+        else if (value >= 10) value = parseFloat(value.toFixed(2));
+        else if (value <= -1000) value = parseFloat(value.toFixed(0));
+        else if (value <= -100) value = parseFloat(value.toFixed(1));
+        else if (value < 10) value = parseFloat(value.toFixed(2));
+        return value;
     }
+
   },
   mounted: function(){
     this.checkAllDropdowns();
@@ -292,76 +376,23 @@ var app = new Vue({
     this.$nextTick(function(){
         // this.checkAllDropdowns();
     });
+    update();
+    //setInterval(update,5000);
+    function update(){
+        $.ajax({ type: "GET", url: path+"input/get", success: function(result){ 
+            app.live = result;
+        }});
+    }
   },
   watch: {
       // watch for changes in the conf obj
       conf: {
           handler: function(newVal, oldVal){
-            $.post(path+"config/setemonhub", {config: JSON.stringify(newVal)}, function(response){ 
-                if(response==='ok') {
-                    // all good - data saved
-                }
-            });
+            this.debounced_save(newVal);
           },
           deep: true
       }
   }
 });
-
-$("#conf").on('click',".section-heading",function(){
-  var name = $(this).attr("name");
-  $(".section-content[name='"+name+"']").toggle(); 
-});
-
-update();
-setInterval(update,5000);
-function update(){
-    $.ajax({ type: "GET", url: path+"input/get", success: function(result){ 
-        app.live = result;
-    }});
-}
-
-// -------------------------------------------------------------------------
-
-function list_format_updated(time) {
-    time = time * 1000;
-    var servertime = new Date().getTime(); // - table.timeServerLocalOffset;
-    var update = new Date(time).getTime();
-    
-    var secs = (servertime - update) / 1000;
-    var mins = secs / 60;
-    var hour = secs / 3600;
-    var day = hour / 24;
-    
-    var updated = secs.toFixed(0) + "s";
-    if (update == 0 || !$.isNumeric(secs)) updated = "n/a";
-    else if (secs < 0) updated = secs.toFixed(0) + "s";
-    // update time ahead of server date is signal of slow network
-    else if (secs.toFixed(0) == 0) updated = "now";
-    else if (day > 7) updated = "inactive";
-    else if (day > 2) updated = day.toFixed(1) + " days";
-    else if (hour > 2) updated = hour.toFixed(0) + " hrs";
-    else if (secs > 180) updated = mins.toFixed(0) + " mins";
-    
-    secs = Math.abs(secs);
-    var color = "rgb(255,0,0)";
-    if (secs < 25) color = "rgb(50,200,50)";
-    else if (secs < 60) color = "rgb(240,180,20)";
-    else if (secs < 3600 * 2) color = "rgb(255,125,20)";
-    
-    return "<span style='color:" + color + ";'>" + updated + "</span>";
-}
-
-function list_format_value(value) {
-    if (value == null) return "NULL";
-    value = parseFloat(value);
-    if (value >= 1000) value = parseFloat(value.toFixed(0));
-    else if (value >= 100) value = parseFloat(value.toFixed(1));
-    else if (value >= 10) value = parseFloat(value.toFixed(2));
-    else if (value <= -1000) value = parseFloat(value.toFixed(0));
-    else if (value <= -100) value = parseFloat(value.toFixed(1));
-    else if (value < 10) value = parseFloat(value.toFixed(2));
-    return value;
-}
 
 </script>
