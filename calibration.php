@@ -64,7 +64,7 @@ select { margin:0px; width:300px; }
             <td>Voltage calibration:</td>
             <td>
             <select :id="['input',node.nodename,index].join('_')" 
-              @change="passOnSelection($event, node.rx)">
+              @change="passOnSelection($event, node)">
               <option v-for="device in preset_vcals" :value="device.vcal">
                 {{device.name}}
               </option>
@@ -72,12 +72,12 @@ select { margin:0px; width:300px; }
             <!-- <select><option>ACAC Ideal Power</option></select></td> -->
             <td><div class="input-prepend input-append">
               <button class="btn" 
-                @mousedown="waitForLongPress(node.rx, false)" 
+                @mousedown="waitForLongPress(node, false)" 
                 @mouseup="stopLongPress" 
                 @mouseleave="stopLongPress">-</button>
               <input v-model="node.rx.vcal" type="text" style="width:70px">
               <button class="btn" 
-                @mousedown="waitForLongPress(node.rx, true)" 
+                @mousedown="waitForLongPress(node, true)" 
                 @mouseup="stopLongPress" 
                 @mouseleave="stopLongPress">+</button>
             </div></td>
@@ -168,32 +168,34 @@ var app = new Vue({
       return list_format_value(value)
     },
     increase: function(input) {
-      this.stepOffset(input, true);
+      this.step_vcal(input, true);
     },
     decrease: function(input) {
-      this.stepOffset(input, false);
+      this.step_vcal(input, false);
     },
-    setOffset: function(input, value) {
-      input.vcal = Number(value).toFixed(2);
-      //this.checkDropdown(input);
+    set_vcal: function(node, value) {
+      if(node.rx.vcal) {
+        node.rx.vcal = Number(value).toFixed(2);
+        this.check_vcal_select(node);
+      }
     },
-    stepOffset: function(input, isIncrement) {
+    step_vcal: function(node, isIncrement) {
       var _step = Math.abs(this.step);
       var step = isIncrement ? _step: 0 - _step;
-      var offset = parseFloat(input.offset);
-      this.setOffset(input, offset + step);
+      var offset = parseFloat(node.rx.vcal);
+      this.set_vcal(node, offset + step);
     },
-    waitForLongPress: function(input, isIncrement){
+    waitForLongPress: function(node, isIncrement){
       var vm = this;
-      this.stepOffset(input, isIncrement);
+      this.step_vcal(node, isIncrement);
       this.pressTimer = setTimeout(function(){
-        vm.startLongPress(input, isIncrement);
+        vm.startLongPress(node, isIncrement);
       }, 600)
     },
-    startLongPress: function(input, isIncrement){
+    startLongPress: function(node, isIncrement){
       var vm = this;
       this.holdTimer = setInterval(function(){
-        vm.stepOffset(input, isIncrement)
+        vm.step_vcal(node, isIncrement)
       }, 50);
     },
     stopLongPress: function(){
@@ -203,39 +205,29 @@ var app = new Vue({
       this.holdTimer = null;
     },
     checkAllDropdowns: function(){
-        console.log('checkAllDropdowns()')
       for (i in this.conf.nodes) {
         var node = this.conf.nodes[i];
-        for (let j in node.rx.unitless) {
-          let input = node.rx.unitless[j];
-          this.checkDropdown(node, j);
-        }
+        this.check_vcal_select(node);
       }
     },
-    checkDropdown: function(node, index) {
-      var select = document.querySelector('#'+['input',node.nodename,index].join('_'));
+    check_vcal_select: function(node) {
+      var index = node.rx.unitless.indexOf('v');
+      var select = document.querySelector('#'+['input',node.nodename, index].join('_'));
       if (select) {
-        var val = node.vcal ? Number(node.vcal).toFixed(2): 0;
-        console.log(2, 'checkDropdown()', node.nodename, index, select, select.options)
-        
+        var val = node.rx.vcal ? Number(node.rx.vcal).toFixed(2): 0;
         for(i=0;i<select.options.length;i++){
-            console.log('test2',i)
-        }
-        for(i in [1,2,3]) {
-            console.log('i=',i,select.options.length);
-          if (Number(select.options[i].value).toFixed(2) == val) {
-            select.selectedIndex = i;
-            break;
-          } else {
-            select.selectedIndex = 0;
-          }
+            let option = select.options[i];
+            let option_value = Number(option.value).toFixed(2);
+            if (option_value == val) {
+                select.selectedIndex = i;
+            }
         }
       }
     },
-    passOnSelection: function(event, input) {
+    passOnSelection: function(event, node) {
       var select = event.target;
       var value = select.options[select.selectedIndex].value
-      this.setOffset(input, value)
+      this.set_vcal(node, value)
     }
   },
   mounted: function(){
