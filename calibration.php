@@ -74,7 +74,7 @@ select { margin:0px; width:300px; }
     <transition name="fade">
         <div id="status" v-if="status!=''"><strong>{{status}}</strong></div>
     </transition>
-    <h2 style="margin-top:2.5rem">Calibration</h2>
+    <h2 style="padding-top:2.5rem;margin-top:0">Calibration</h2>
     <p>Adjust calibration for nodes running unitless firmware.</p>
     <div class='section' v-for="(node,nodeid) in conf.nodes">
       <div class='section-heading' :data-name='nodeid' @click="toggle">
