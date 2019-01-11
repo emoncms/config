@@ -117,7 +117,6 @@ select { margin:0px; width:300px; }
           <tr v-for="(input,index) in node.rx.unitless" v-if="input=='rp'">
             <td>{{ node.rx.names[index] }}</td>
             <td>
-            {{['input',node.nodename,index].join('_')}}
             <select :id="['input',node.nodename,index].join('_')" 
               @change="passOnSelection_ical($event, node, index)">
               <option v-for="device in preset_icals" :value="device.ical">{{device.name}}</option>
@@ -136,9 +135,15 @@ select { margin:0px; width:300px; }
               </div>
             </td>
             <td><div class="input-prepend input-append">
-              <button class="btn">-</button>
+            <button class="btn" type="button"
+                    @mousedown="waitForLongPress_phase(node, false, index)" 
+                    @mouseup="stopLongPress" 
+                    @mouseleave="stopLongPress">-</button>
               <input type="text" class="span4" v-model="node.rx.phase_shifts[index]">
-              <button class="btn">+</button>
+              <button class="btn" type="button"
+                    @mousedown="waitForLongPress_phase(node, true, index)" 
+                    @mouseup="stopLongPress" 
+                    @mouseleave="stopLongPress">+</button>
             </div></td>
             <td><span v-if="typeof live[node.nodename]!=='undefined'" v-html="list_format_value(live[node.nodename][node.rx.names[index]].value)"></span>{{ node.rx.units[index] }}</td>
             <td><span v-if="typeof live[node.nodename]!=='undefined'" v-html="list_format_updated(live[node.nodename][node.rx.names[index]].time)"></span></td>
@@ -226,6 +231,11 @@ var app = new Vue({
         // check dropdown for matching value.
         this.check_ical_select(node, index);
     },
+    set_phase: function(node, value, index) {
+        var phase_shifts = node.rx.phase_shifts;
+        phase_shifts[index] = Number(value).toFixed(2);
+        node.rx.phase_shifts = Object.assign([], node.rx.phase_shifts, phase_shifts);
+    },
     step_vcal: function(node, isIncrement) {
       var _step = Math.abs(this.step);
       var step = isIncrement ? _step: 0 - _step;
@@ -237,6 +247,12 @@ var app = new Vue({
       var step = isIncrement ? _step: 0 - _step;
       var value = parseFloat(node.rx.icals[index]);
       this.set_ical(node, value + step, index);
+    },
+    step_phase: function(node, isIncrement, index) {
+      var _step = Math.abs(this.step);
+      var step = isIncrement ? _step: 0 - _step;
+      var value = parseFloat(node.rx.phase_shifts[index]);
+      this.set_phase(node, value + step, index);
     },
     waitForLongPress_vcal: function(node, isIncrement){
       var vm = this;
@@ -258,10 +274,23 @@ var app = new Vue({
         vm.startLongPress_ical(node, isIncrement, index);
       }, 600);
     },
-    startLongPress_ical: function(node, isIncrement){
+    startLongPress_ical: function(node, isIncrement, index){
       var vm = this;
       this.holdTimer = setInterval(function(){
-        vm.step_ical(node, isIncrement)
+        vm.step_ical(node, isIncrement, index);
+      }, 50);
+    },
+    waitForLongPress_phase: function(node, isIncrement, index){
+      var vm = this;
+      this.step_phase(node, isIncrement, index);
+      this.pressTimer = setTimeout(function(){
+        vm.startLongPress_phase(node, isIncrement, index);
+      }, 600);
+    },
+    startLongPress_phase: function(node, isIncrement, index){
+      var vm = this;
+      this.holdTimer = setInterval(function(){
+        vm.step_phase(node, isIncrement, index);
       }, 50);
     },
     stopLongPress: function(){
@@ -324,7 +353,7 @@ var app = new Vue({
       this.set_ical(node, value, index)
     },
     debounced_save: function(data) {
-        var wait = 400;
+        var wait = 700;
         var vm = this;
         clearTimeout(this.timeout);
         this.timeout = setTimeout(function () {
@@ -394,12 +423,8 @@ var app = new Vue({
   },
   mounted: function(){
     this.checkAllDropdowns();
-    // use this callback every time dom is updated (nextTick)...
-    this.$nextTick(function(){
-        // this.checkAllDropdowns();
-    });
     update();
-    //setInterval(update,5000);
+    setInterval(update,5000);
     function update(){
         $.ajax({ type: "GET", url: path+"input/get", success: function(result){ 
             app.live = result;
