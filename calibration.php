@@ -230,7 +230,7 @@ var app = new Vue({
     set: function(node, value, index, key) {
         var values = node.rx[key];
         values[index] = Number(value).toFixed(2);
-        node.rx[key] = Object.assign([], values, key);
+        node.rx[key] = Object.assign([], values);
         this.check_select(node, index, key);
     },
     set_phase: function(node, value, index) {
