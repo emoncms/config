@@ -93,20 +93,20 @@ select { margin:0px; width:300px; }
           <tr v-for="(input,index) in node.rx.unitless" v-if="input=='v'">
             <td>Voltage calibration:</td>
             <td>
-            <select :id="['input',node.nodename,index].join('_')" 
-              @change="passOnSelection_vcal($event, node)">
+            <select :data-index="index" :id="['input',node.nodename,index].join('_')" 
+              @change="passOnSelection($event, node, 'vcal')">
               <option v-for="device in preset_vcals" :value="device.vcal">
                 {{device.name}}
               </option>
             </select>
             <td><div class="input-prepend input-append">
               <button class="btn" 
-                @mousedown="waitForLongPress_vcal(node, false)" 
+                @mousedown="waitForLongPress(node, false, index, 'vcal')" 
                 @mouseup="stopLongPress" 
                 @mouseleave="stopLongPress">-</button>
               <input class="span4" v-model="node.rx.vcal" type="text">
               <button class="btn" 
-                @mousedown="waitForLongPress_vcal(node, true)" 
+                @mousedown="waitForLongPress(node, true, index, 'vcal')" 
                 @mouseup="stopLongPress" 
                 @mouseleave="stopLongPress">+</button>
             </div></td>
@@ -117,31 +117,31 @@ select { margin:0px; width:300px; }
           <tr v-for="(input,index) in node.rx.unitless" v-if="input=='rp'">
             <td>{{ node.rx.names[index] }}</td>
             <td>
-            <select :id="['input',node.nodename,index].join('_')" 
-              @change="passOnSelection_ical($event, node, index)">
+            <select :data-index="index" :id="['input',node.nodename,index].join('_')" 
+              @change="passOnSelection($event, node, 'icals')">
               <option v-for="device in preset_icals" :value="device.ical">{{device.name}}</option>
             </select>
             <td>
               <div class="input-prepend input-append">
                 <button class="btn" type="button"
-                    @mousedown="waitForLongPress_ical(node, false, index)" 
+                    @mousedown="waitForLongPress(node, false, index, 'icals')" 
                     @mouseup="stopLongPress" 
                     @mouseleave="stopLongPress">-</button>
                 <input class="span4" type="text"  v-model="node.rx.icals[index]">
                 <button class="btn" type="button"
-                    @mousedown="waitForLongPress_ical(node, true, index)" 
+                    @mousedown="waitForLongPress(node, true, index, 'icals')" 
                     @mouseup="stopLongPress" 
                     @mouseleave="stopLongPress">+</button>
               </div>
             </td>
             <td><div class="input-prepend input-append">
             <button class="btn" type="button"
-                    @mousedown="waitForLongPress_phase(node, false, index)" 
+                    @mousedown="waitForLongPress(node, false, index, 'phase_shifts')" 
                     @mouseup="stopLongPress" 
                     @mouseleave="stopLongPress">-</button>
               <input type="text" class="span4" v-model="node.rx.phase_shifts[index]">
               <button class="btn" type="button"
-                    @mousedown="waitForLongPress_phase(node, true, index)" 
+                    @mousedown="waitForLongPress(node, true, index, 'phase_shifts')" 
                     @mouseup="stopLongPress" 
                     @mouseleave="stopLongPress">+</button>
             </div></td>
@@ -172,16 +172,22 @@ for (var n in conf.nodes) {
 }
 conf.nodes = tmp;
 // console.log(JSON.parse(JSON.stringify(conf)));
+Vue.config.productionTip = false;
 
 var app = new Vue({
   el: '#conf',
   data: { 
     conf: conf,
     live: "hello",
-    step: .1,
+    increment: .1,
     pressTimer: null,
     holdTimer: null,
     save_timeout: void 0,
+    decimals: 2,
+    longPressWait: 600,
+    longPressDelay: 50,
+    ajaxSaveWait: 700,
+    statusMessageDelay: 3000,
     status: '', 
     preset_vcals: [
       {id: 'custom', name: 'Custom'},
@@ -197,7 +203,7 @@ var app = new Vue({
   },
   filters: {
     dp2: function(value) {
-      return value.toFixed(2);
+      return value.toFixed(this.decimals);
     }
   },
   methods: {
@@ -213,81 +219,40 @@ var app = new Vue({
     decrease: function(input) {
       this.step_vcal(input, false);
     },
-    set_vcal: function(node, value) {
-      if(node.rx.vcal) {
-        node.rx.vcal = Number(value).toFixed(2);
-        this.check_vcal_select(node);
-      }
+    set: function(node, value, index, key) {
+        if (key==='vcal') {
+            node.rx[key] = Number(value).toFixed(this.decimals);
+        } else {
+            var values = node.rx[key];
+            values[index] = Number(value).toFixed(this.decimals);
+            node.rx[key] = Object.assign([], values);
+        }
+        this.check_select(node, index, key);
     },
-    set_ical: function(node, value, index) {
-      // icals not vuejs reactive ? not sure why - fixed by assiging a new array
-        var icals = node.rx.icals;
-        icals[index] = Number(value).toFixed(2);
-        node.rx.icals = Object.assign([], node.rx.icals, icals);
-        // check dropdown for matching value.
-        this.check_ical_select(node, index);
+    step: function(node, isIncrement, index, key) {
+        var _step = Math.abs(this.increment);
+        var step = isIncrement ? _step: 0 - _step;
+        var value;
+        if (typeof node.rx[key] === 'string') {
+            value = parseFloat(node.rx[key]);
+        } else {
+            value = parseFloat(node.rx[key][index]);
+        }
+        var newValue = Number(value + step).toFixed(this.decimals);
+        this.set(node, newValue , index, key);
     },
-    set_phase: function(node, value, index) {
-        var phase_shifts = node.rx.phase_shifts;
-        phase_shifts[index] = Number(value).toFixed(2);
-        node.rx.phase_shifts = Object.assign([], node.rx.phase_shifts, phase_shifts);
+    waitForLongPress: function(node, isIncrement, index, key) {
+        var vm = this;
+        this.step(node, isIncrement, index, key);
+        this.pressTimer = setTimeout(function(){
+            vm.startLongPress(node, isIncrement, index, key);
+        }, this.longPressWait);
     },
-    step_vcal: function(node, isIncrement) {
-      var _step = Math.abs(this.step);
-      var step = isIncrement ? _step: 0 - _step;
-      var offset = parseFloat(node.rx.vcal);
-      this.set_vcal(node, offset + step);
-    },
-    step_ical: function(node, isIncrement, index) {
-      var _step = Math.abs(this.step);
-      var step = isIncrement ? _step: 0 - _step;
-      var value = parseFloat(node.rx.icals[index]);
-      this.set_ical(node, value + step, index);
-    },
-    step_phase: function(node, isIncrement, index) {
-      var _step = Math.abs(this.step);
-      var step = isIncrement ? _step: 0 - _step;
-      var value = parseFloat(node.rx.phase_shifts[index]);
-      this.set_phase(node, value + step, index);
-    },
-    waitForLongPress_vcal: function(node, isIncrement){
-      var vm = this;
-      this.step_vcal(node, isIncrement);
-      this.pressTimer = setTimeout(function(){
-        vm.startLongPress_vcal(node, isIncrement);
-      }, 600);
-    },
-    startLongPress_vcal: function(node, isIncrement, index){
-      var vm = this;
-      this.holdTimer = setInterval(function(){
-        vm.step_vcal(node, isIncrement, index)
-      }, 50);
-    },
-    waitForLongPress_ical: function(node, isIncrement, index){
-      var vm = this;
-      this.step_ical(node, isIncrement, index);
-      this.pressTimer = setTimeout(function(){
-        vm.startLongPress_ical(node, isIncrement, index);
-      }, 600);
-    },
-    startLongPress_ical: function(node, isIncrement, index){
-      var vm = this;
-      this.holdTimer = setInterval(function(){
-        vm.step_ical(node, isIncrement, index);
-      }, 50);
-    },
-    waitForLongPress_phase: function(node, isIncrement, index){
-      var vm = this;
-      this.step_phase(node, isIncrement, index);
-      this.pressTimer = setTimeout(function(){
-        vm.startLongPress_phase(node, isIncrement, index);
-      }, 600);
-    },
-    startLongPress_phase: function(node, isIncrement, index){
-      var vm = this;
-      this.holdTimer = setInterval(function(){
-        vm.step_phase(node, isIncrement, index);
-      }, 50);
+    startLongPress: function(node, isIncrement, index, key) {
+        var vm = this;
+        this.holdTimer = setInterval(function(){
+            vm.step(node, isIncrement, index, key);
+        }, this.longPressDelay);
     },
     stopLongPress: function(){
       clearTimeout(this.pressTimer);
@@ -298,38 +263,27 @@ var app = new Vue({
     checkAllDropdowns: function(){
       for (i in this.conf.nodes) {
         var node = this.conf.nodes[i];
-        this.check_vcal_select(node);
-        for (var j = 0; j < node.rx.icals.length; j++) {
-            this.check_ical_select(node, j);
+        for (var j = 0; j < node.rx.unitless.length; j++) {
+            var key = node.rx.unitless[j] === 'v' ? 'vcal': 'icals';
+            this.check_select(node, j, key);
         }
       }
     },
-    check_vcal_select: function(node) {
-      var index = node.rx.unitless.indexOf('v');
-      var select = document.querySelector('#' + ['input', node.nodename, index].join('_'));
-      if (select) {
-        var val = node.rx.vcal ? Number(node.rx.vcal).toFixed(2): 0;
-        for(i = 0; i < select.options.length; i++){
-            let option = select.options[i];
-            let option_value = Number(option.value).toFixed(2);
-            if (option_value == val) {
-                select.selectedIndex = i;
-                break;
-            } else {
-                select.selectedIndex = 0;
-            }
-        }
-      }
-    },
-    check_ical_select: function(node, index) {
+    check_select: function(node, index, key) {
       var select = document.querySelector('#'+['input',node.nodename, index].join('_'));
-      var icals = node.rx.icals;
+      var values = node.rx[key];
       if (select) {
         for(var i = 0; i < select.options.length; i++){
-            var val = icals[index] ? Number(icals[index]).toFixed(2): 0;
+            var value;
+            if (typeof values === 'string') {
+                value = values;
+            } else {
+                value = values[index];
+            }
+            value = Number(value).toFixed(this.decimals)
             var option = select.options[i];
-            var option_value = Number(option.value).toFixed(2);
-            if (option_value == val) {
+            var option_value = Number(option.value).toFixed(this.decimals);
+            if (option_value == value) {
                 select.selectedIndex = i;
                 break;
             } else {
@@ -338,23 +292,18 @@ var app = new Vue({
         }
       }
     },
-    passOnSelection_vcal: function(event, node) {
-      var select = event.target;
-      var value = select.options[select.selectedIndex].value
-      this.set_vcal(node, value)
-    },
-    passOnSelection_ical: function(event, node, index) {
-      var select = event.target;
-      var value = select.options[select.selectedIndex].value
-      this.set_ical(node, value, index)
+    passOnSelection: function(event, node, key) {
+        var select = event.target;
+        var index = select.dataset.index;
+        var value = select.options[select.selectedIndex].value || 0;
+        this.set(node, value, index, key);
     },
     debounced_save: function(data) {
-        var wait = 700;
         var vm = this;
         clearTimeout(this.timeout);
         this.timeout = setTimeout(function () {
             vm.save(data);
-         }, wait);
+         }, this.ajaxSaveWait);
     },
     save: function(data){
         var vm = this;
@@ -370,7 +319,7 @@ var app = new Vue({
         var vm = this;
         setTimeout(function () {
             vm.status = ''
-        }, 3000)
+        }, this.statusMessageDelay)
     },
     toggle: function(event) {
         let section = document.querySelector('.section-content[data-name="'+event.target.dataset.name+'"]')
