@@ -185,17 +185,13 @@ var app = new Vue({
     status: '', 
     preset_vcals: [
       {id: 'custom', name: 'Custom'},
-      {id: 'device_1', name: 'ACAC Ideal Power', vcal: 266.41},
-      {id: 'device_2', name: 'Avacado',vcal: 1.2},
-      {id: 'device_3', name: 'Carrot', vcal: 1.8},
-      {id: 'device_4', name: 'Onion',  vcal: 1.9},
-      {id: 'device_5', name: 'Tomato', vcal: 2.1},
-      {id: 'device_6', name: 'Squash', vcal: 2.5},
-      {id: 'device_7', name: 'Garlic', vcal: 2.8}
+      {id: '77DB-06-09-UK', name: 'Ideal Power 77DB-06-09 (UK Plug type)', vcal: 268.97},
+      {id: '77DB-06-09-EU', name: 'Ideal Power 77DE-06-09 (EURO Plug type)', vcal: 260.0},
+      {id: '77DB-06-09-US', name: 'Ideal Power 77DA-10-09 (US Plug type)', vcal: 130.0}
     ],
     preset_icals: [
       {id: 'custom', name: 'Custom'},
-      {id: 'SCT-013-000-22R', ical: 90.1, name: 'SCT-013-000: 2000 turns, 22R burden'},
+      {id: 'SCT-013-000-22R',  ical: 90.1, name: 'SCT-013-000: 2000 turns, 22R burden'},
       {id: 'SCT-013-000-100R', ical: 90.3, name: 'SCT-013-000: 2000 turns, 100R burden'},
     ]
   },
