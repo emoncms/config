@@ -94,7 +94,7 @@ select { margin:0px; width:300px; }
             <td>Voltage calibration:</td>
             <td>
             <select :id="['input',node.nodename,index].join('_')" 
-              @change="passOnSelection_vcal($event, node)">
+              @change="passOnSelection($event, node, 0, 'vcal')">
               <option v-for="device in preset_vcals" :value="device.vcal">
                 {{device.name}}
               </option>
@@ -118,7 +118,7 @@ select { margin:0px; width:300px; }
             <td>{{ node.rx.names[index] }}</td>
             <td>
             <select :id="['input',node.nodename,index].join('_')" 
-              @change="passOnSelection_ical($event, node, index)">
+              @change="passOnSelection($event, node, index, 'icals')">
               <option v-for="device in preset_icals" :value="device.ical">{{device.name}}</option>
             </select>
             <td>
@@ -226,6 +226,12 @@ var app = new Vue({
         node.rx.icals = Object.assign([], node.rx.icals, icals);
         // check dropdown for matching value.
         this.check_ical_select(node, index);
+    },
+    set: function(node, value, index, key) {
+        var values = node.rx[key];
+        values[index] = Number(value).toFixed(2);
+        node.rx[key] = Object.assign([], values, key);
+        this.check_select(node, index, key);
     },
     set_phase: function(node, value, index) {
         var phase_shifts = node.rx.phase_shifts;
@@ -338,6 +344,23 @@ var app = new Vue({
         }
       }
     },
+    check_select: function(node, index, key) {
+      var select = document.querySelector('#'+['input',node.nodename, index].join('_'));
+      var values = node.rx[key];
+      if (select) {
+        for(var i = 0; i < select.options.length; i++){
+            var val = values[index] ? Number(values[index]).toFixed(2): 0;
+            var option = select.options[i];
+            var option_value = Number(option.value).toFixed(2);
+            if (option_value == val) {
+                select.selectedIndex = i;
+                break;
+            } else {
+                select.selectedIndex = 0;
+            }
+        }
+      }
+    },
     passOnSelection_vcal: function(event, node) {
       var select = event.target;
       var value = select.options[select.selectedIndex].value
@@ -348,6 +371,11 @@ var app = new Vue({
       var value = select.options[select.selectedIndex].value
       this.set_ical(node, value, index)
     },
+    passOnSelection: function(event, node, index, key) {
+        var select = event.target;
+        var value = select.options[select.selectedIndex].value;
+        this.set(node, value, index, key);
+    }
     debounced_save: function(data) {
         var wait = 700;
         var vm = this;
