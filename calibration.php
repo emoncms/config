@@ -375,7 +375,7 @@ var app = new Vue({
         var select = event.target;
         var value = select.options[select.selectedIndex].value;
         this.set(node, value, index, key);
-    }
+    },
     debounced_save: function(data) {
         var wait = 700;
         var vm = this;
