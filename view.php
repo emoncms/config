@@ -25,9 +25,6 @@ pre {
 
 </style>
 <div id="wrapper">
-  <?php include "Modules/config/sidebar.php"; ?>
-  
-  <div style="height:20px"></div>
 
   <h3>EmonHub</h3>
   Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms

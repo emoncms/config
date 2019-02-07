@@ -24,7 +24,8 @@ function config_controller()
      
     if ($route->action == '') {
         $route->format = "html";
-        return view("Modules/config/view.php", array());
+        $route->submenu = view("Modules/config/sidebar.php");
+        return view("Modules/config/view.php");
     }
 
     // ---------------------------------------------------------
