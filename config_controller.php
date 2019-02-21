@@ -75,7 +75,7 @@ function config_controller()
     // www-data ALL=(ALL) NOPASSWD:service emonhub restart
     else if ($route->action == 'restart')
     {
-        exec("sudo service emonhub restart > /dev/null &");
+        exec("sudo /bin/systemctl restart emonhub > /dev/null &");
         return true;
     }
 
