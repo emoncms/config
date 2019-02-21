@@ -20,7 +20,7 @@ function config_controller()
     $emonhub_config_file = "/home/pi/data/emonhub.conf";
     $emonhub_logfile = "/var/log/emonhub/emonhub.log";
     
-    if (!$session['write']) return array('content'=>false);
+    if (!$session['write']) return false;
      
     if ($route->action == 'view') {
         $route->format = "html";
@@ -28,29 +28,29 @@ function config_controller()
         return array('content'=>$result, 'fullwidth'=>false);
     }
     
-    if ($route->action == 'get') {
+    else if ($route->action == 'get') {
         $route->format = "text";
-        $result = file_get_contents($emonhub_config_file);
+        return file_get_contents($emonhub_config_file);
     }
     
-    if ($route->action == 'getemonhublog') {
+    else if ($route->action == 'getemonhublog') {
         $route->format = "text";
         ob_start();
-        passthru("tail -30 ".$emonhub_logfile);
-        $result = trim(ob_get_clean());
+        passthru("journalctl -u emonhub -n 30 --no-pager");
+        return trim(ob_get_clean());
     }
     
     
-    if ($route->action == 'set' && isset($_POST['config'])) {
+    else if ($route->action == 'set' && isset($_POST['config'])) {
         $route->format = "text";
         $config = $_POST['config'];
         $fh = fopen($emonhub_config_file,"w");
         fwrite($fh,$config);
         fclose($fh);
-        $result = "Config Saved";
+        return "Config Saved";
     }
     
-    if ($route->action == 'downloadlog')
+    else if ($route->action == 'downloadlog')
     {
         header("Content-Type: application/octet-stream");
         header("Content-Transfer-Encoding: Binary");
@@ -71,12 +71,13 @@ function config_controller()
         exit;
     }
 
-  // emonHub restart requires added to /etc/sudoers:
-  // www-data ALL=(ALL) NOPASSWD:/etc/init.d/emonhub restart
-  if ($route->action == 'restart')
-  {
-    exec("sudo /etc/init.d/emonhub restart > /dev/null &");
-  }
+    // emonHub restart requires added to /etc/sudoers:
+    // www-data ALL=(ALL) NOPASSWD:service emonhub restart
+    else if ($route->action == 'restart')
+    {
+        exec("sudo service emonhub restart > /dev/null &");
+        return true;
+    }
 
     return array('content'=>$result);
 }
