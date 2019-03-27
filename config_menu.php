@@ -1,7 +1,7 @@
 <?php
-    $menu['setup'][] = array(
+
+    $menu['sidebar']['setup'][] = array(
         'text' => _("Emonhub"),
         'path' => 'config',
-        'icon' => 'bullhorn',
-        'sort' => 5
+        'icon' => 'bullhorn'
     );
