@@ -67,7 +67,7 @@ function config_controller()
         else
         {
           echo($emonhub_logfile . " does not exist!");
-        }
+          passthru("journalctl -u emonhub --no-pager");        }
         exit;
     }
 
