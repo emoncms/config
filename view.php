@@ -26,7 +26,7 @@ pre {
 </style>
 <div id="wrapper">
 
-  <h3>EmonHub</h3>
+  <h2>EmonHub</h2>
   Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms
   <br><br>
   <div class="input-prepend input-append" style="float:right">
