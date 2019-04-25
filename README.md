@@ -28,3 +28,9 @@ Check for database updates in Emoncms admin
 sudo cp emonhub-sudoers /etc/sudoers.d/
 sudo chmod 0440 /etc/sudoers.d/emonhub-sudoers
 ```
+
+## Give web user permission to read the emonhub systemd log
+
+Emonhub service has now been [swtiched to using systemd](https://github.com/openenergymonitor/emonhub/blob/emon-pi/service/emonhub.service), to allow the emonhub config module to read the systemd log we need to add the following group permissions. 
+
+`sudo usermod -a -G systemd-journal www-data`

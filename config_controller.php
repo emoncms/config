@@ -20,7 +20,7 @@ function config_controller()
     $emonhub_config_file = "/home/pi/data/emonhub.conf";
     $emonhub_logfile = "/var/log/emonhub/emonhub.log";
     
-    if (!$session['write']) return array('content'=>false);
+    if (!$session['write']) return false;
      
     if ($route->action == '') {
         $route->format = "html";
@@ -36,75 +36,29 @@ function config_controller()
         return view("Modules/config/editor.php", array("conf"=>$conf));
     }
     
-    if ($route->action == 'calibration') {
-        $route->format = "html";
-        $conf = $redis->get("get:emonhubconf");
-        return view("Modules/config/calibration.php", array("conf"=>$conf));
-    }
-    
-    if ($route->action == "setemonhub" && isset($_POST['config'])) {
-        $route->format = "json";
-        $config = json_decode($_POST['config']);
-        if ($config!=null) {
-            $redis->set("set:emonhubconf",json_encode($config));
-        }
-        return "ok";
-    }
-    
-    // ---------------------------------------------------------
-
-    if ($route->action == 'connect') {
-        $route->format = "html";
-        $conf = $redis->get("get:emonhubconf");
-        return view("Modules/config/connect.php", array("conf"=>$conf));
-    }
-    
-    if ($route->action == 'remoteauth') {
-        $route->format = "json";
-        $host = post("host");
-        
-        
-        $result = json_decode(http_request("POST",$host."/user/auth.json",array(
-            "username"=>post("username"),
-            "password"=>post("password")
-        )));
-        
-        if (isset($result->success) && $result->success) {
-            $conf = json_decode($redis->get("get:emonhubconf"));
-            if (isset($conf->interfacers->emoncmsorg)) {
-                $conf->interfacers->emoncmsorg->runtimesettings->apikey = "".$result->apikey_write;
-                $redis->set("set:emonhubconf",json_encode($conf));
-            }
-        }
-        
-        return $result;
-    }
-
-    // ---------------------------------------------------------
-            
-    if ($route->action == 'get') {
+    else if ($route->action == 'get') {
         $route->format = "text";
-        $result = file_get_contents($emonhub_config_file);
+        return file_get_contents($emonhub_config_file);
     }
     
-    if ($route->action == 'getemonhublog') {
+    else if ($route->action == 'getemonhublog') {
         $route->format = "text";
         ob_start();
-        passthru("tail -30 ".$emonhub_logfile);
-        $result = trim(ob_get_clean());
+        passthru("journalctl -u emonhub -n 30 --no-pager");
+        return trim(ob_get_clean());
     }
     
     
-    if ($route->action == 'set' && isset($_POST['config'])) {
+    else if ($route->action == 'set' && isset($_POST['config'])) {
         $route->format = "text";
         $config = $_POST['config'];
         $fh = fopen($emonhub_config_file,"w");
         fwrite($fh,$config);
         fclose($fh);
-        $result = "Config Saved";
+        return "Config Saved";
     }
     
-    if ($route->action == 'downloadlog')
+    else if ($route->action == 'downloadlog')
     {
         header("Content-Type: application/octet-stream");
         header("Content-Transfer-Encoding: Binary");
@@ -121,16 +75,17 @@ function config_controller()
         else
         {
           echo($emonhub_logfile . " does not exist!");
-        }
+          passthru("journalctl -u emonhub --no-pager");        }
         exit;
     }
 
-  // emonHub restart requires added to /etc/sudoers:
-  // www-data ALL=(ALL) NOPASSWD:/etc/init.d/emonhub restart
-  if ($route->action == 'restart')
-  {
-    exec("sudo /etc/init.d/emonhub restart > /dev/null &");
-  }
+    // emonHub restart requires added to /etc/sudoers:
+    // www-data ALL=(ALL) NOPASSWD:service emonhub restart
+    else if ($route->action == 'restart')
+    {
+        exec("sudo /bin/systemctl restart emonhub > /dev/null &");
+        return true;
+    }
 
     return array('content'=>$result);
 }
