@@ -58,13 +58,8 @@ pre {
   
 </div>
 
-<script type="text/javascript" src="<?php echo $path; ?>Lib/misc/sidebar.js"></script>
-<link rel="stylesheet" href="<?php echo $path; ?>Lib/misc/sidebar.css">
 
 <script>
-init_sidebar({menu_element:"#config_menu"});
-
-var path = "<?php echo $path; ?>";
 
 var config = "";
 
