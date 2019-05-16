@@ -14,7 +14,7 @@
 
 function config_controller()
 {
-    global $route, $session;
+    global $route, $session, $redis;
     $result = false;
     
     $emonhub_config_file = "/home/pi/data/emonhub.conf";
@@ -22,10 +22,18 @@ function config_controller()
     
     if (!$session['write']) return false;
      
-    if ($route->action == 'view') {
+    if ($route->action == '') {
         $route->format = "html";
-        $result = view("Modules/config/edit.php", array());
-        return array('content'=>$result, 'fullwidth'=>false);
+        $route->submenu = view("Modules/config/sidebar.php");
+        return view("Modules/config/view.php");
+    }
+
+    // ---------------------------------------------------------
+
+    if ($route->action == 'editor') {
+        $route->format = "html";
+        $conf = $redis->get("get:emonhubconf");
+        return view("Modules/config/editor.php", array("conf"=>$conf));
     }
     
     else if ($route->action == 'get') {
@@ -67,7 +75,7 @@ function config_controller()
         else
         {
           echo($emonhub_logfile . " does not exist!");
-        }
+          passthru("journalctl -u emonhub --no-pager");        }
         exit;
     }
 

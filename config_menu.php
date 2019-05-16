@@ -1,4 +1,7 @@
 <?php
 
-    $menu_dropdown_config[] = array('name'=> "EmonHub", 'icon'=>'icon-bullhorn', 'path'=>"config/view" , 'session'=>"write", 'order' => 8 );
-
+    $menu['setup'][] = array(
+        'text' => _("Emonhub"),
+        'path' => 'config',
+        'icon' => 'bullhorn'
+    );
