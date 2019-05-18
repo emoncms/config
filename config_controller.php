@@ -44,40 +44,9 @@ function config_controller()
     
     else if ($route->action == 'getemonhublog') {
         $route->format = "text";
-        //ob_start();
-        //passthru("journalctl -u emonhub -n 30 --no-pager");
-        if (file_exists($emonhub_logfile)) {
-          ob_start();
-          $handle = fopen($emonhub_logfile, "r");
-          $lines = 200;
-          $linecounter = $lines;
-          $pos = -2;
-          $beginning = false;
-          $text = array();
-          while ($linecounter > 0) {
-            $t = " ";
-            while ($t != "\n") {
-              if(!empty($handle) && fseek($handle, $pos, SEEK_END) == -1) {
-                $beginning = true;
-                break;
-              }
-              if(!empty($handle)) $t = fgetc($handle);
-              $pos --;
-            }
-            $linecounter --;
-            if ($beginning) {
-              rewind($handle);
-            }
-            $text[$lines-$linecounter-1] = fgets($handle);
-            if ($beginning) break;
-          }
-          foreach ($text as $line) {
-            echo $line;
-          }
-          $result = trim(ob_get_clean());
-        }
-        //return trim(ob_get_clean());
-        return array('content'=>$result, 'fullwidth'=>false);
+        ob_start();
+        passthru("journalctl -u emonhub -n 30 --no-pager");
+        $result = trim(ob_get_clean());
     }
     
     
@@ -126,5 +95,5 @@ function config_controller()
         
     }
 
-    return array('content'=>$result);
+    return array('content'=>$result, 'fullwidth'=>false);
 }
