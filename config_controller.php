@@ -14,11 +14,12 @@
 
 function config_controller()
 {
-    global $route, $session, $redis;
+    global $route, $session, $redis, $homedir;
     $result = false;
     
-    $emonhub_config_file = "/home/pi/data/emonhub.conf";
+    $emonhub_config_file = "$homedir/data/emonhub.conf";
     $emonhub_logfile = "/var/log/emonhub/emonhub.log";
+    $restart_log= "$homedir/restart.log";
     
     if (!$session['write']) return false;
      
@@ -43,9 +44,40 @@ function config_controller()
     
     else if ($route->action == 'getemonhublog') {
         $route->format = "text";
-        ob_start();
-        passthru("journalctl -u emonhub -n 30 --no-pager");
-        return trim(ob_get_clean());
+        //ob_start();
+        //passthru("journalctl -u emonhub -n 30 --no-pager");
+        if (file_exists($emonhub_logfile)) {
+          ob_start();
+          $handle = fopen($emonhub_logfile, "r");
+          $lines = 200;
+          $linecounter = $lines;
+          $pos = -2;
+          $beginning = false;
+          $text = array();
+          while ($linecounter > 0) {
+            $t = " ";
+            while ($t != "\n") {
+              if(!empty($handle) && fseek($handle, $pos, SEEK_END) == -1) {
+                $beginning = true;
+                break;
+              }
+              if(!empty($handle)) $t = fgetc($handle);
+              $pos --;
+            }
+            $linecounter --;
+            if ($beginning) {
+              rewind($handle);
+            }
+            $text[$lines-$linecounter-1] = fgets($handle);
+            if ($beginning) break;
+          }
+          foreach ($text as $line) {
+            echo $line;
+          }
+          $result = trim(ob_get_clean());
+        }
+        //return trim(ob_get_clean());
+        return array('content'=>$result, 'fullwidth'=>false);
     }
     
     
@@ -83,8 +115,15 @@ function config_controller()
     // www-data ALL=(ALL) NOPASSWD:service emonhub restart
     else if ($route->action == 'restart')
     {
-        exec("sudo /bin/systemctl restart emonhub > /dev/null &");
-        return true;
+        list($scriptPath) = get_included_files();
+        $basedir = str_replace("/index.php","",$scriptPath);
+        $restart_script = "$basedir/Modules/config/./restart.sh";
+        if ($redis->rpush("service-runner","$restart_script>$restart_log")){
+            $result= "service-runner trigger sent for $restart_script $homedir";
+        } else {
+            $result= "could not send trigger";
+        }
+        
     }
 
     return array('content'=>$result);
