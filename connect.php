@@ -1,5 +1,6 @@
 <?php
 global $path;
+$version = 2;
 ?>
 <style>
 label {
@@ -8,11 +9,7 @@ label {
 }
 </style>
 
-<div id="wrapper">
-  <?php include "Modules/config/sidebar.php"; ?>
-
-  <div style="height:20px"></div>
-
+<?php if(!empty($tabs)) echo $tabs ?>
   <h2>Connect to remote emoncms account</h2>
   <p>Configure emonhub to send data to remote emoncms account (e.g emoncms.org)<p>
 
@@ -33,11 +30,7 @@ label {
     <input type="text" id="apikey" style="width:400px" readonly>
   </div>
   
-</div>
-
-<script type="text/javascript" src="<?php echo $path; ?>Lib/misc/sidebar.js"></script>
-<link rel="stylesheet" href="<?php echo $path; ?>Lib/misc/sidebar.css">
-<link rel="stylesheet" href="<?php echo $path; ?>Modules/config/style.css">
+<link rel="stylesheet" href="<?php echo $path; ?>Modules/config/style.css?v=<?php echo $version ?>">
 <script src="<?php echo $path; ?>Modules/config/vue.js"></script>
 
 <script>
@@ -46,12 +39,18 @@ var path = "<?php echo $path; ?>";
 
 init_sidebar({menu_element:"#config_menu"});
 
-var conf = <?php echo $conf; ?>;
+var conf = <?php echo !empty($conf) ? $conf: "{}"; ?>;
 
-if (conf.interfacers==undefined) alert("emonhub interfacers missing");
-if (conf.interfacers.emoncmsorg==undefined) alert("emonhub emoncmsorg interfacer missing");
-$("#host").val(conf.interfacers.emoncmsorg.runtimesettings.url);
-$("#apikey").val(conf.interfacers.emoncmsorg.runtimesettings.apikey);
+if (conf.interfacers==undefined) {
+    alert("emonhub interfacers missing");
+}else{
+    if (conf.interfacers.emoncmsorg==undefined) {
+        alert("emonhub emoncmsorg interfacer missing");
+    } else {
+        $("#host").val(conf.interfacers.emoncmsorg.runtimesettings.url);
+        $("#apikey").val(conf.interfacers.emoncmsorg.runtimesettings.apikey);
+    }
+}
 
 $("#connect").click(function() {
     var host = $("#host").val();

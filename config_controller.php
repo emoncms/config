@@ -16,16 +16,19 @@ function config_controller()
 {
     global $route, $session, $redis;
     $result = false;
-    
-    $emonhub_config_file = "/home/pi/data/emonhub.conf";
-    $emonhub_logfile = "/var/log/emonhub/emonhub.log";
-    
+    require "Modules/config/config_model.php";
+    $tabs = \emonhub\Config::sub_nav_tabs();
+    // @todo: not sure if tabs should be used? Routes not complete for each tab in config_menu.php
+    $tabs = ''; // override with blank string
+    $log_levels = \emonhub\Config::$log_levels;
+    $emonhub_config_file = \emonhub\Config::$config_file;
+    $emonhub_logfile = \emonhub\Config::$logfile;
     if (!$session['write']) return false;
-     
+    
     if ($route->action == '') {
         $route->format = "html";
-        $route->submenu = view("Modules/config/sidebar.php");
-        return view("Modules/config/view.php");
+        // $route->submenu = view("Modules/config/sidebar.php");
+        return view("Modules/config/view.php", array('log_levels'=>$log_levels,'tabs'=>$tabs, 'level'=> \emonhub\Config::get_log_level()));
     }
 
     // ---------------------------------------------------------
@@ -33,7 +36,17 @@ function config_controller()
     if ($route->action == 'editor') {
         $route->format = "html";
         $conf = $redis->get("get:emonhubconf");
-        return view("Modules/config/editor.php", array("conf"=>$conf));
+        return view("Modules/config/editor.php", array("conf"=>$conf,'tabs'=>$tabs));
+    }
+    if ($route->action == 'calibration') {
+        $route->format = "html";
+        $conf = $redis->get("get:emonhubconf");
+        return view("Modules/config/calibration.php", array("conf"=>$conf,'tabs'=>$tabs));
+    }
+    if ($route->action == 'connect') {
+        $route->format = "html";
+        $conf = $redis->get("get:emonhubconf");
+        return view("Modules/config/connect.php", array("conf"=>$conf,'tabs'=>$tabs));
     }
     
     else if ($route->action == 'get') {
@@ -56,6 +69,68 @@ function config_controller()
         fwrite($fh,$config);
         fclose($fh);
         return "Config Saved";
+    }
+    
+    else if ($route->action == 'loglevel') {
+        $route->format = "json";
+        $success = true;
+        $message = '';
+        $level = 1; // @todo: read current level
+
+        // load the settings.php as text file
+        $file = file_get_contents($emonhub_config_file);
+        $matches = array();
+
+        if($route->method === 'POST') {
+            if(!empty(post('level'))) {
+                $level = post('level');
+                if (is_file($emonhub_config_file) && is_writable($emonhub_config_file)) {
+                    $log_level = intval(post('level'));
+                    if(array_key_exists($log_level, $log_levels)) {
+                        // replace the value of the `loglevel` variable
+                        preg_match('/^\s*loglevel = (.*)$/m', $file, $matches);
+                        if(!empty($matches)) {
+                            $file = str_replace($matches[1], $log_levels[$log_level], $file);
+                            $bytes = file_put_contents($emonhub_config_file, $file);
+                            $success = $bytes && $bytes > 0;
+                            // $log->error("EmonHub log level changed: $log_level");
+                            $message = _('Changes Saved');
+                        } else {
+                            $message = sprintf(_('"loglevel" not found in: %s'), $emonhub_config_file);
+                        }
+                    } else {
+                        $message = sprintf(_('New log level out of range. must be one of %s'), implode(', ', array_keys($log_levels)));
+                    }
+                } else {
+                    $message = sprintf(_('Not able to write to: %s'), $emonhub_config_file);
+                }
+            } else {
+                $message = _('No new log level supplied');
+            }
+        } else {
+            // was not a POST return current level
+            $file_log_level = \emonhub\Config::get_log_level();
+            if(!empty($file_log_level)) {
+                $log_level = array_search($file_log_level, $log_levels);
+                if($log_level === false) {
+                    $message = sprintf(_('"loglevel" in %s not in list'), $emonhub_config_file);
+                } else {
+                    $success = true;
+                }
+            } else {
+                $success = false;
+                $log_level = null;
+                $message = sprintf(_('"loglevel" not found in: %s'), $emonhub_config_file);
+            }
+            $log_level = intval($log_level);
+        }
+        $result = array (
+            'success' => $success,
+            'log-level' => !empty($log_levels[$log_level]) ? $log_levels[$log_level]: 'NULL',
+            'log-level-id' =>  $log_level,
+            'message' => $message
+        );
+        return $result;
     }
     
     else if ($route->action == 'downloadlog')

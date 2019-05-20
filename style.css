@@ -82,11 +82,11 @@
 
 }
 
-.icon {
+/* .icon {
   cursor:pointer;
   width:11px;
   padding:2px;
-}
+} */
 
 .center { text-align:center; }
 .add-element { cursor:pointer; }
