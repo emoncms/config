@@ -14,11 +14,12 @@
 
 function config_controller()
 {
-    global $route, $session, $redis;
+    global $route, $session, $redis, $homedir;
     $result = false;
     
-    $emonhub_config_file = "/home/pi/data/emonhub.conf";
+    $emonhub_config_file = "$homedir/data/emonhub.conf";
     $emonhub_logfile = "/var/log/emonhub/emonhub.log";
+    $restart_log= "$homedir/restart.log";
     
     if (!$session['write']) return false;
      
@@ -45,7 +46,7 @@ function config_controller()
         $route->format = "text";
         ob_start();
         passthru("journalctl -u emonhub -n 30 --no-pager");
-        return trim(ob_get_clean());
+        $result = trim(ob_get_clean());
     }
     
     
@@ -83,9 +84,16 @@ function config_controller()
     // www-data ALL=(ALL) NOPASSWD:service emonhub restart
     else if ($route->action == 'restart')
     {
-        exec("sudo /bin/systemctl restart emonhub > /dev/null &");
-        return true;
+        list($scriptPath) = get_included_files();
+        $basedir = str_replace("/index.php","",$scriptPath);
+        $restart_script = "$basedir/Modules/config/./restart.sh";
+        if ($redis->rpush("service-runner","$restart_script>$restart_log")){
+            $result= "service-runner trigger sent for $restart_script $homedir";
+        } else {
+            $result= "could not send trigger";
+        }
+        
     }
 
-    return array('content'=>$result);
+    return array('content'=>$result, 'fullwidth'=>false);
 }
