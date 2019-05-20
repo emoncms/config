@@ -224,7 +224,8 @@ $(function(){
                 $btn.parents('li').siblings().find('a').removeClass('active');
                 notify(gettext('Log level set to: %s').replace('%s',response['log-level']),'success');
             } else {
-                notify(gettext('Log level not set'), 'error', response.hasOwnProperty('message') ? response.message: '');
+                let message = response.hasOwnProperty('message') ? response.message: '';
+                notify(message, 'error');
             }
         })
         .error(function(xhr,error,message){

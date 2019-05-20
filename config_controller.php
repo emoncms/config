@@ -75,7 +75,6 @@ function config_controller()
         $route->format = "json";
         $success = true;
         $message = '';
-        $level = 1; // @todo: read current level
 
         // load the settings.php as text file
         $file = file_get_contents($emonhub_config_file);
@@ -102,6 +101,8 @@ function config_controller()
                         $message = sprintf(_('New log level out of range. must be one of %s'), implode(', ', array_keys($log_levels)));
                     }
                 } else {
+                    $log_level = null;
+                    $success = false;
                     $message = sprintf(_('Not able to write to: %s'), $emonhub_config_file);
                 }
             } else {
