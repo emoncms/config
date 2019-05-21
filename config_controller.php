@@ -16,7 +16,7 @@ function config_controller()
 {
     global $route, $session, $redis, $homedir;
     $result = false;
-    require ("Modules/config/config_model.php");
+    require "Modules/config/config_model.php";
     $tabs = \emonhub\Config::sub_nav_tabs();
     // @todo: not sure if tabs should be used? Routes not complete for each tab in config_menu.php
     $tabs = ''; // override with blank string
