@@ -14,15 +14,17 @@
 
 function config_controller()
 {
-    global $route, $session, $redis;
+    global $route, $session, $redis, $homedir;
     $result = false;
-    require "Modules/config/config_model.php";
+    require ("Modules/config/config_model.php");
     $tabs = \emonhub\Config::sub_nav_tabs();
     // @todo: not sure if tabs should be used? Routes not complete for each tab in config_menu.php
     $tabs = ''; // override with blank string
     $log_levels = \emonhub\Config::$log_levels;
     $emonhub_config_file = \emonhub\Config::$config_file;
     $emonhub_logfile = \emonhub\Config::$logfile;
+    $restart_log= sprintf("%s/%s",$homedir,\emonhub\Config::$restart_log_name);
+
     if (!$session['write']) return false;
     
     if ($route->action == '') {
@@ -58,7 +60,7 @@ function config_controller()
         $route->format = "text";
         ob_start();
         passthru("journalctl -u emonhub -n 30 --no-pager");
-        return trim(ob_get_clean());
+        $result = trim(ob_get_clean());
     }
     
     
@@ -159,9 +161,16 @@ function config_controller()
     // www-data ALL=(ALL) NOPASSWD:service emonhub restart
     else if ($route->action == 'restart')
     {
-        exec("sudo /bin/systemctl restart emonhub > /dev/null &");
-        return true;
+        list($scriptPath) = get_included_files();
+        $basedir = str_replace("/index.php","",$scriptPath);
+        $restart_script = "$basedir/Modules/config/./restart.sh";
+        if ($redis->rpush("service-runner","$restart_script>$restart_log")){
+            $result= "service-runner trigger sent for $restart_script $homedir";
+        } else {
+            $result= "could not send trigger";
+        }
+        
     }
 
-    return array('content'=>$result);
+    return array('content'=>$result, 'fullwidth'=>false);
 }
