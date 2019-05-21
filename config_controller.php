@@ -59,7 +59,11 @@ function config_controller()
     else if ($route->action == 'getemonhublog') {
         $route->format = "text";
         ob_start();
-        passthru("journalctl -u emonhub -n 30 --no-pager");
+        if (file_exists($emonhub_logfile)) {
+            passthru("tail -30 $emonhub_logfile");
+        } else {
+            passthru("journalctl -u emonhub -n 30 --no-pager");
+        }   
         $result = trim(ob_get_clean());
     }
     
