@@ -66,15 +66,13 @@ select { margin:0px; width:300px; }
     height: 0;
 }
 </style>
-
-<div id="wrapper">
-  <?php include "Modules/config/sidebar.php"; ?>
+<?php if(!empty($tabs)) echo $tabs ?>
 
   <div id="conf">
     <transition name="fade">
         <div id="status" v-if="status!=''"><strong>{{status}}</strong></div>
     </transition>
-    <h2 style="padding-top:2.5rem;margin-top:0">Calibration</h2>
+    <h2>Calibration</h2>
     <p>Adjust calibration for nodes running unitless firmware.</p>
     <div class='section' v-for="(node,nodeid) in conf.nodes">
       <div class='section-heading' :data-name='nodeid' @click="toggle">
@@ -152,7 +150,6 @@ select { margin:0px; width:300px; }
       </div>
     </div>
   </div>
-</div>
 
 <script type="text/javascript" src="<?php echo $path; ?>Lib/misc/sidebar.js"></script>
 <link rel="stylesheet" href="<?php echo $path; ?>Lib/misc/sidebar.css">

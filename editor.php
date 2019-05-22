@@ -1,13 +1,10 @@
 <?php
 global $path;
+$version = 2;
 ?>
+<?php if(!empty($tabs)) echo $tabs ?>
 
-<link rel="stylesheet" type="text/css" href="style.css" />
-
-<div id="wrapper">
-  <?php include "Modules/config/sidebar.php"; ?>
-
-  <div style="height:20px"></div>
+<link rel="stylesheet" href="<?php echo $path; ?>Modules/config/style.css?v=<?php echo $version ?>">
 
   <div id="conf">
     <h2>Hub</h2>
@@ -61,11 +58,7 @@ global $path;
       </table>
     </div>
   </div>
-</div>
 
-<script type="text/javascript" src="<?php echo $path; ?>Lib/misc/sidebar.js"></script>
-<link rel="stylesheet" href="<?php echo $path; ?>Lib/misc/sidebar.css">
-<link rel="stylesheet" href="<?php echo $path; ?>Modules/config/style.css">
 <script src="<?php echo $path; ?>Modules/config/vue.js"></script>
 
 <script>
@@ -74,7 +67,7 @@ var path = "<?php echo $path; ?>";
 
 init_sidebar({menu_element:"#config_menu"});
 
-var conf = <?php echo $conf; ?>;
+var conf = <?php echo empty($conf) ? '""' : $conf; ?>;
 conf.nodes = nodes_hr(conf.nodes);
 
 var app = new Vue({
