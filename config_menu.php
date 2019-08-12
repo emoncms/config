@@ -1,13 +1,14 @@
 <?php
 
-    $menu['setup'][] = array(
+    $menu['sidebar']['emoncms'][] = array(
         'text' => _("Emonhub"),
         'path' => 'config',
         'icon' => 'bullhorn',
         'active' => 'config',
         'data' => array(
             'sidebar' => '#sidebar_config'
-        )
+        ),
+        'order' =>'b1'
     );
 
     // used in config_controller.php to build the tabs
