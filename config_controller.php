@@ -176,5 +176,5 @@ function config_controller()
         
     }
 
-    return array('content'=>$result, 'fullwidth'=>false);
+    return array('content'=>$result);
 }
