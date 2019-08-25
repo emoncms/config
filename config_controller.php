@@ -17,20 +17,23 @@ function config_controller()
     global $route, $session, $redis, $homedir;
     $result = false;
     require "Modules/config/config_model.php";
-    $tabs = \emonhub\Config::sub_nav_tabs();
+    $config = new Config();
+    
+    // $tabs = $config->sub_nav_tabs();
     // @todo: not sure if tabs should be used? Routes not complete for each tab in config_menu.php
     $tabs = ''; // override with blank string
-    $log_levels = \emonhub\Config::$log_levels;
-    $emonhub_config_file = \emonhub\Config::$config_file;
-    $emonhub_logfile = \emonhub\Config::$logfile;
-    $restart_log= sprintf("%s/%s",$homedir,\emonhub\Config::$restart_log_name);
+    
+    $log_levels = $config->log_levels;
+    $emonhub_config_file = $config->config_file;
+    $emonhub_logfile = $config->logfile;
+    $restart_log= sprintf("%s/%s",$homedir,$config->restart_log_name);
 
     if (!$session['write']) return false;
     
     if ($route->action == '') {
         $route->format = "html";
         // $route->submenu = view("Modules/config/sidebar.php");
-        return view("Modules/config/view.php", array('log_levels'=>$log_levels,'tabs'=>$tabs, 'level'=> \emonhub\Config::get_log_level()));
+        return view("Modules/config/view.php", array('log_levels'=>$log_levels,'tabs'=>$tabs, 'level'=> $config->get_log_level()));
     }
 
     // ---------------------------------------------------------
@@ -116,7 +119,7 @@ function config_controller()
             }
         } else {
             // was not a POST return current level
-            $file_log_level = \emonhub\Config::get_log_level();
+            $file_log_level = $config->get_log_level();
             if(!empty($file_log_level)) {
                 $log_level = array_search($file_log_level, $log_levels);
                 if($log_level === false) {
