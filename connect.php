@@ -35,8 +35,6 @@ label {
 
 <script>
 
-var path = "<?php echo $path; ?>";
-
 init_sidebar({menu_element:"#config_menu"});
 
 var conf = <?php echo !empty($conf) ? $conf: "{}"; ?>;
