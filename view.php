@@ -122,7 +122,7 @@ section {
       <div style="float: right;">
       <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-info">Download Log</a>
       </div>
-      <a href="https://github.com/openenergymonitor/emonhub">EmonHub Documentation</a>
+      <a href="https://github.com/openenergymonitor/emonhub" target="_blank">EmonHub Documentation</a>
   </div>
 
 <div id="snackbar"></div>
