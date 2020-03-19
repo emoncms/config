@@ -91,7 +91,7 @@ section {
       <h4>Config:</h4>
       <textarea id="configtextarea" style="width:100%; height:400px"></textarea><br>
       <button class="btn btn-warning" id="save">Save</button><br><br>
-      <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md">EmonHub Config Documentation</a>
+      <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md" target="_blank">EmonHub Config Documentation</a>
   </div>
 
   <div id="emonhublogview" style="display:none">
@@ -122,7 +122,7 @@ section {
       <div style="float: right;">
       <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-info">Download Log</a>
       </div>
-      <a href="https://github.com/openenergymonitor/emonhub">EmonHub Documentation</a>
+      <a href="https://github.com/openenergymonitor/emonhub" target="_blank">EmonHub Documentation</a>
   </div>
 
 <div id="snackbar"></div>
