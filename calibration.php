@@ -158,7 +158,6 @@ select { margin:0px; width:300px; }
 <script>
 init_sidebar({menu_element:"#config_menu"});
 
-var path = "<?php echo $path; ?>";
 var conf = <?php echo !empty($conf) ? $conf: '{}'; ?>;
 
 var tmp = {};
