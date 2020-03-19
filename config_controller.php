@@ -14,7 +14,7 @@
 
 function config_controller()
 {
-    global $route, $session, $redis, $homedir;
+    global $route, $session, $redis;
     $result = false;
     require "Modules/config/config_model.php";
     $config = new Config();
@@ -26,7 +26,7 @@ function config_controller()
     $log_levels = $config->log_levels;
     $emonhub_config_file = $config->config_file;
     $emonhub_logfile = $config->logfile;
-    $restart_log= sprintf("%s/%s",$homedir,$config->restart_log_name);
+    $restart_log = "/var/log/emoncms/".$config->restart_log_name;
 
     if (!$session['write']) return false;
     
@@ -168,14 +168,16 @@ function config_controller()
     // www-data ALL=(ALL) NOPASSWD:service emonhub restart
     else if ($route->action == 'restart')
     {
+        $route->format = "text";
         list($scriptPath) = get_included_files();
         $basedir = str_replace("/index.php","",$scriptPath);
-        $restart_script = "$basedir/Modules/config/./restart.sh";
+        $restart_script = "$basedir/Modules/config/restart.sh";
         if ($redis->rpush("service-runner","$restart_script>$restart_log")){
-            $result= "service-runner trigger sent for $restart_script $homedir";
+            $result= "service-runner trigger sent for $restart_script>$restart_log";
         } else {
             $result= "could not send trigger";
         }
+        return $result;
         
     }
 

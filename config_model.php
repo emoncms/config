@@ -15,7 +15,7 @@ class Config
 {
     public $config_file = "/etc/emonhub/emonhub.conf";
     public $logfile = "/var/log/emonhub/emonhub.log";
-    public $restart_log_name = "restart.log";
+    public $restart_log_name = "emonhub-restart.log";
     
     public $log_levels = array(
         1=>"DEBUG",
