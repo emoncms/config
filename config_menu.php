@@ -1,16 +1,9 @@
 <?php
 
-    $menu['sidebar']['emoncms'][] = array(
-        'text' => _("Emonhub"),
-        'path' => 'config',
-        'icon' => 'bullhorn',
-        'active' => 'config',
-        'data' => array(
-            'sidebar' => '#sidebar_config'
-        ),
-        'order' =>'b1'
-    );
+global $session;
+if ($session["write"]) $menu["setup"]["l2"]['config'] = array("name"=>"Emonhub","href"=>"config", "order"=>5, "icon"=>"bullhorn");
 
+/*
     // used in config_controller.php to build the tabs
     $menu['_config_tabs'] = array(
         array('text'=>_('EmonCMS Connect'), 'path'=>'config/connect'),
@@ -18,6 +11,7 @@
         array('text'=>_('EmonHub.Conf Editor'), 'path'=>'config/editor'),
         array('text'=>_('View Log'), 'path'=>'config#log')
     );
+    */
 
 // UNCOMMENT THE FOLLOWING TO PUT THE CONFIG MENU ITEMS IN THE EMONCMS SIDEBAR
 // ---------------------------------------------------------------------------
