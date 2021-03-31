@@ -30,28 +30,70 @@ function config_controller()
 
     if (!$session['write']) return false;
     
-    if ($route->action == '') {
+    if ($route->action == 'log') {
         $route->format = "html";
         // $route->submenu = view("Modules/config/sidebar.php");
         return view("Modules/config/view.php", array('log_levels'=>$log_levels,'tabs'=>$tabs, 'level'=> $config->get_log_level()));
     }
-
+    
+    if ($route->action == 'nodes') {
+        $route->format = "html";
+        $conf = file_get_contents("http://localhost:8000/config");
+        return view("Modules/config/nodes/nodes.php", array("conf"=>$conf));
+    }
+    
+    if ($route->action == 'getnodes') {   
+        $route->format = "json";  
+        return json_decode(file_get_contents("http://localhost:8000/nodes"));
+    }
+    
+    if ($route->action == 'available') {   
+        $route->format = "json";  
+        return json_decode(file_get_contents("http://localhost:8000/available"));
+    }
+    
+    if ($route->action == 'save') {
+        $route->format = "text";  
+        $conf = json_decode(post("conf"));
+        http_request("POST","http://localhost:8000/config", json_encode($conf));
+        return "saved";
+    }
     // ---------------------------------------------------------
 
     if ($route->action == 'editor') {
         $route->format = "html";
-        $conf = $redis->get("get:emonhubconf");
+        $conf = file_get_contents("http://localhost:8000/config");
         return view("Modules/config/editor.php", array("conf"=>$conf,'tabs'=>$tabs));
     }
     if ($route->action == 'calibration') {
         $route->format = "html";
-        $conf = $redis->get("get:emonhubconf");
+        $conf = file_get_contents("http://localhost:8000/config");
         return view("Modules/config/calibration.php", array("conf"=>$conf,'tabs'=>$tabs));
     }
     if ($route->action == 'connect') {
         $route->format = "html";
-        $conf = $redis->get("get:emonhubconf");
+        $conf = file_get_contents("http://localhost:8000/config");
         return view("Modules/config/connect.php", array("conf"=>$conf,'tabs'=>$tabs));
+    }
+    
+    if ($route->action == 'remoteauth') {
+        $route->format = "text";  
+        if (!isset($_POST['host'])) return "host missing";
+        if (!isset($_POST['username'])) return "username missing";    
+        if (!isset($_POST['password'])) return "password missing";
+        
+        $host = $_POST['host'];
+        $username = $_POST['username'];
+        $password = $_POST['password'];
+        
+        $route->format = "json"; 
+        $result = json_decode(http_request("POST","https://emoncms.org/user/auth.json",array("username"=>$username,"password"=>$password)));
+        
+        $conf = json_decode(file_get_contents("http://localhost:8000/config"));
+        $conf->interfacers->emoncmsorg->runtimesettings->apikey = $result->apikey_write;
+        http_request("POST","http://localhost:8000/config", json_encode($conf));
+        
+        return $result;
     }
     
     else if ($route->action == 'get') {

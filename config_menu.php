@@ -1,33 +1,40 @@
 <?php
 
 global $session;
-if ($session["write"]) $menu["setup"]["l2"]['config'] = array("name"=>"Emonhub","href"=>"config", "order"=>5, "icon"=>"bullhorn");
-
-/*
-    // used in config_controller.php to build the tabs
-    $menu['_config_tabs'] = array(
-        array('text'=>_('EmonCMS Connect'), 'path'=>'config/connect'),
-        array('text'=>_('Calibration'), 'path'=>'config/calibration'),
-        array('text'=>_('EmonHub.Conf Editor'), 'path'=>'config/editor'),
-        array('text'=>_('View Log'), 'path'=>'config#log')
+if ($session["write"]) {
+    $menu["setup"]["l2"]['config'] = array(
+        "name"=>"Emonhub",
+        "href"=>"config", 
+        "order"=>-1, 
+        "icon"=>"bullhorn",
+        
+        "l3"=>array(
+            "connect"=>array(
+                "name"=>_("Connect"),
+                "href"=>"config/connect", 
+                "order"=>1, 
+                "icon"=>"input"
+            ),
+            "nodes"=>array(
+                "name"=>_("Nodes"),
+                "href"=>"config/nodes", 
+                "order"=>1, 
+                "icon"=>"input"
+            ),
+            "log"=>array(
+                "name"=>_("Log"),
+                "href"=>"config/log", 
+                "order"=>1, 
+                "icon"=>"input"
+            ),
+            "editor"=>array(
+                "name"=>_("Editor"),
+                "href"=>"config/editor", 
+                "order"=>1, 
+                "icon"=>"input"
+            )
+        )  
     );
-    */
-
-// UNCOMMENT THE FOLLOWING TO PUT THE CONFIG MENU ITEMS IN THE EMONCMS SIDEBAR
-// ---------------------------------------------------------------------------
-    // $menu['sidebar']['emoncms'][] = array(
-    //     'text' => _("Emonhub"),
-    //     'path' => 'config',
-    //     'active'=>'config',
-    //     'icon' => 'show_chart',
-    //     'order' => 2,
-    //     'li_id' => 'config-link',
-    //     'data'=> array('sidebar' => '#sidebar_config')
-    // );
-
-    // $menu['sidebar']['includes']['emoncms']['config'] = array(
-    //     array('text'=>_('EmonCMS Connect'), 'path'=>'config/connect'),
-    //     array('text'=>_('Calibration'), 'path'=>'config/calibration'),
-    //     array('text'=>_('EmonHub.Conf Editor'), 'path'=>'config/editor'),
-    //     array('text'=>_('View Log'), 'path'=>'config#log')
-    // );
+    
+    
+}

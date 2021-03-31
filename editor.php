@@ -63,8 +63,6 @@ $version = 2;
 
 <script>
 
-init_sidebar({menu_element:"#config_menu"});
-
 var conf = <?php echo empty($conf) ? '""' : $conf; ?>;
 conf.nodes = nodes_hr(conf.nodes);
 
