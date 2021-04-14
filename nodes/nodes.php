@@ -59,6 +59,12 @@
       <button class="btn" @click="addDatacode(nodeid)">Add</button>
     </div>
     <button class="btn" @click="removeDatacode(nodeid)" v-if="conf_nodes[nodeid] && conf_nodes[nodeid].rx.datacodes.length>0"><i class="icon-trash"></i> Remove last</button>
+    <div class="input-prepend input-append" v-if="conf_nodes[nodeid]">
+      <span class="add-on">Data whitening</span>
+      <span class="add-on"><input class="input" type="checkbox" v-model="conf_nodes[nodeid].rx.whitening" @change="update(nodeid)" /></span>
+    </div>
+    
+    
     <button v-if="show_apply_configuration[nodeid]" class="btn btn-warning" style="float:right" @click="apply(nodeid)">Apply configuration</button>
     <div style="clear:both"></div>
   </div>

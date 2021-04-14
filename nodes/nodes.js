@@ -20,7 +20,7 @@ $.getJSON( path+"config/getnodes", function( result ) {
     }
 
     $.getJSON( path+"config/available", function( result ) {
-        templates = result.available;
+        templates = result;
         
         for (var z in templates) {
             template_datalengths[z] = datacodes_len(templates[z].rx.datacodes)
@@ -128,6 +128,10 @@ $.getJSON( path+"config/getnodes", function( result ) {
                     if (nodes[nodeid].selected!='custom') {
                         conf_nodes[nodeid] = JSON.parse(JSON.stringify(templates[nodes[nodeid].selected]))
                         conf_nodes[nodeid].nodename += nodeid
+                        
+                        var result = decode_node(nodes[nodeid].bytes, conf_nodes[nodeid].rx);
+                        nodes[nodeid] = Object.assign(nodes[nodeid],result);
+                        
                         Vue.set(this.show_apply_configuration,nodeid,true)
                     }
                 },
