@@ -8,6 +8,11 @@
 <h2 style="margin-top:20px">Configure RFM Nodes</h2>
 
 <div id="app">
+  <div class="alert" v-if="Object.keys(nodes).length === 0">
+      <h3 class="alert-heading mt-0">No nodes detected</h3>
+      <p>EmonHub has not yet received any node data, please check your emonhub configuration</p>
+  </div>
+
   <div v-for="(node,nodeid) in nodes" class="box">
     <div class="updated" style="color:#888">Last updated: <span :style="{color:node.time_color}">{{ node.time_value }}</span></div>
     <div><b>Node: {{ nodeid }}</b></div>
