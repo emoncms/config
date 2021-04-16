@@ -5,7 +5,7 @@
 <script src="<?php echo $path; ?>Modules/config/nodes/decode.js?v=<?php echo $v ?>"></script>
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/config/nodes/nodes.css?v=<?php echo $v ?>">
 
-<h2 style="margin-top:20px">Configure RFM Nodes</h2>
+<h3>Configure RFM Nodes</h3>
 
 <div id="app">
   <div class="alert" v-if="Object.keys(nodes).length === 0">

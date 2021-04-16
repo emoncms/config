@@ -15,13 +15,9 @@
 function config_controller()
 {
     global $route, $session, $redis;
-    $result = false;
+    
     require "Modules/config/config_model.php";
     $config = new Config();
-    
-    // $tabs = $config->sub_nav_tabs();
-    // @todo: not sure if tabs should be used? Routes not complete for each tab in config_menu.php
-    $tabs = ''; // override with blank string
     
     $log_levels = $config->log_levels;
     $emonhub_config_file = $config->config_file;
@@ -29,18 +25,39 @@ function config_controller()
     $restart_log = "/var/log/emoncms/".$config->restart_log_name;
 
     if (!$session['write']) return false;
-    
-    if ($route->action == 'log') {
-        $route->format = "html";
-        // $route->submenu = view("Modules/config/sidebar.php");
-        return view("Modules/config/view.php", array('log_levels'=>$log_levels,'tabs'=>$tabs, 'level'=> $config->get_log_level()));
+
+    if ($route->action == 'http') {
+        $conf = file_get_contents("http://localhost:8000/config");
+        return view("Modules/config/http/http.php", array("conf"=>$conf));
+    }
+
+    if ($route->action == 'mqtt') {
+        $conf = file_get_contents("http://localhost:8000/config");
+        return view("Modules/config/mqtt/mqtt.php", array("conf"=>$conf));
     }
     
     if ($route->action == 'nodes') {
-        $route->format = "html";
         $conf = file_get_contents("http://localhost:8000/config");
         return view("Modules/config/nodes/nodes.php", array("conf"=>$conf));
     }
+
+    if ($route->action == 'editor') {
+        return view("Modules/config/editor/editor.php", array());
+    }
+
+    if ($route->action == 'OEM') {
+        $conf = file_get_contents("http://localhost:8000/config");
+        return view("Modules/config/OEM/OEM.php", array("conf"=>$conf));
+    }
+    
+    if ($route->action == 'log') {
+        return view("Modules/config/log/log.php", array(
+            'log_levels'=>$log_levels, 
+            'level'=> $config->get_log_level()
+        ));
+    }
+
+    // ---------------------------------------------------------
     
     if ($route->action == 'getnodes') {   
         $route->format = "json";  
@@ -57,23 +74,6 @@ function config_controller()
         $conf = json_decode(post("conf"));
         http_request("POST","http://localhost:8000/config", json_encode($conf));
         return "saved";
-    }
-    // ---------------------------------------------------------
-
-    if ($route->action == 'editor') {
-        $route->format = "html";
-        $conf = file_get_contents("http://localhost:8000/config");
-        return view("Modules/config/editor.php", array("conf"=>$conf,'tabs'=>$tabs));
-    }
-    if ($route->action == 'calibration') {
-        $route->format = "html";
-        $conf = file_get_contents("http://localhost:8000/config");
-        return view("Modules/config/calibration.php", array("conf"=>$conf,'tabs'=>$tabs));
-    }
-    if ($route->action == 'connect') {
-        $route->format = "html";
-        $conf = file_get_contents("http://localhost:8000/config");
-        return view("Modules/config/connect.php", array("conf"=>$conf,'tabs'=>$tabs));
     }
     
     if ($route->action == 'remoteauth') {
@@ -96,24 +96,23 @@ function config_controller()
         return $result;
     }
     
-    else if ($route->action == 'get') {
+    if ($route->action == 'get') {
         $route->format = "text";
         return file_get_contents($emonhub_config_file);
     }
     
-    else if ($route->action == 'getemonhublog') {
+    if ($route->action == 'getemonhublog') {
         $route->format = "text";
         ob_start();
         if (file_exists($emonhub_logfile)) {
-            passthru("tail -30 $emonhub_logfile");
+            passthru("tail -50 $emonhub_logfile");
         } else {
-            passthru("journalctl -u emonhub -n 30 --no-pager");
+            passthru("journalctl -u emonhub -n 50 --no-pager");
         }   
-        $result = trim(ob_get_clean());
+        return trim(ob_get_clean());
     }
     
-    
-    else if ($route->action == 'set' && isset($_POST['config'])) {
+    if ($route->action == 'set' && isset($_POST['config'])) {
         $route->format = "text";
         $config = $_POST['config'];
         $fh = fopen($emonhub_config_file,"w");
@@ -122,7 +121,7 @@ function config_controller()
         return "Config Saved";
     }
     
-    else if ($route->action == 'loglevel') {
+    if ($route->action == 'loglevel') {
         $route->format = "json";
         $success = true;
         $message = '';
@@ -185,7 +184,7 @@ function config_controller()
         return $result;
     }
     
-    else if ($route->action == 'downloadlog')
+    if ($route->action == 'downloadlog')
     {
         header("Content-Type: application/octet-stream");
         header("Content-Transfer-Encoding: Binary");
@@ -193,22 +192,20 @@ function config_controller()
         header("Pragma: no-cache");
         header("Expires: 0");
         flush();
-        if (file_exists($emonhub_logfile))
-        {
-          ob_start();
-          readfile($emonhub_logfile);
-          echo(trim(ob_get_clean()));
+        if (file_exists($emonhub_logfile)) {
+            ob_start();
+            readfile($emonhub_logfile);
+            echo(trim(ob_get_clean()));
+        } else {
+            echo($emonhub_logfile . " does not exist!");
+            passthru("journalctl -u emonhub --no-pager");        
         }
-        else
-        {
-          echo($emonhub_logfile . " does not exist!");
-          passthru("journalctl -u emonhub --no-pager");        }
         exit;
     }
 
     // emonHub restart requires added to /etc/sudoers:
     // www-data ALL=(ALL) NOPASSWD:service emonhub restart
-    else if ($route->action == 'restart')
+    if ($route->action == 'restart')
     {
         $route->format = "text";
         list($scriptPath) = get_included_files();
@@ -220,8 +217,7 @@ function config_controller()
             $result= "could not send trigger";
         }
         return $result;
-        
     }
 
-    return array('content'=>$result);
+    return array('content'=>false);
 }

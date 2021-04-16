@@ -1,0 +1,70 @@
+{
+  "EmonPi": {
+    "Type": "EmonHubOEMInterfacer",
+    "init_settings": {
+      "com_port": "/dev/ttyAMA0",
+      "com_baud": 38400
+    },
+    "runtimesettings": {
+      "pubchannels": ["ToEmonCMS"],
+      "subchannels": ["ToRFM12"],
+      "group": 210,
+      "frequency": 4,
+      "baseid": 5,
+      "vcal": 268.05,
+      "icalA": [90.9,90.9],
+      "icalP": [4.2,4.2],
+      "period": 4.85
+    }
+  },
+  "EmonTx": {
+    "Type": "EmonHubOEMInterfacer",
+    "init_settings": {
+      "com_port": "/dev/ttyAMA0",
+      "com_baud": 38400
+    },
+    "runtimesettings": {
+      "pubchannels": ["ToEmonCMS"],
+      "subchannels": ["ToRFM12"],
+      "group": 210,
+      "frequency": 4,
+      "baseid": 5,
+      "vcal": 268.05,
+      "icalA": [90.9,90.9,90.9,16.67],
+      "icalP": [4.2,4.2,4.2,6.0],
+      "period": 4.85
+    }
+  },
+  "RFM69Pi": {
+    "Type": "EmonHubOEMInterfacer",
+    "init_settings": {
+      "com_port": "/dev/ttyAMA0",
+      "com_baud": 38400
+    },
+    "runtimesettings": {
+      "pubchannels": ["ToEmonCMS"],
+      "subchannels": ["ToRFM12"],
+      "group": 210,
+      "frequency": 4,
+      "baseid": 5
+    }
+  },
+  "STM32_MAX": {
+    "Type": "EmonHubOEMInterfacer",
+    "init_settings": {
+      "com_port": "/dev/ttyAMA0",
+      "com_baud": 38400
+    },
+    "runtimesettings": {
+      "pubchannels": ["ToEmonCMS"],
+      "subchannels": ["ToRFM12"],
+      "group": 210,
+      "frequency": 4,
+      "baseid": 5,
+      "vcal": 268.05,
+      "icalA": [90.9,90.9,90.9,90.9,90.9,90.9,90.9,90.9,90.9],
+      "icalP": [4.2,4.2,4.2,4.2,4.2,4.2,4.2,4.2,4.2],
+      "period": 4.85
+    }
+  }
+}

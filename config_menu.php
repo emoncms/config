@@ -9,27 +9,39 @@ if ($session["write"]) {
         "icon"=>"bullhorn",
         
         "l3"=>array(
-            "connect"=>array(
-                "name"=>_("Connect"),
-                "href"=>"config/connect", 
+            "oem"=>array(
+                "name"=>_("1. OEM Hardware"),
+                "href"=>"config/OEM", 
                 "order"=>1, 
                 "icon"=>"input"
             ),
             "nodes"=>array(
-                "name"=>_("Nodes"),
+                "name"=>_("2. Nodes"),
                 "href"=>"config/nodes", 
                 "order"=>1, 
                 "icon"=>"input"
             ),
-            "log"=>array(
-                "name"=>_("Log"),
-                "href"=>"config/log", 
+            "http"=>array(
+                "name"=>_("3. HTTP"),
+                "href"=>"config/http", 
+                "order"=>1, 
+                "icon"=>"input"
+            ),
+            "mqtt"=>array(
+                "name"=>_("4. MQTT"),
+                "href"=>"config/mqtt", 
                 "order"=>1, 
                 "icon"=>"input"
             ),
             "editor"=>array(
                 "name"=>_("Editor"),
                 "href"=>"config/editor", 
+                "order"=>1, 
+                "icon"=>"input"
+            ),
+            "log"=>array(
+                "name"=>_("Log"),
+                "href"=>"config/log", 
                 "order"=>1, 
                 "icon"=>"input"
             )

@@ -45,21 +45,4 @@ class Config
             return null;
         }
     }
-    
-    /*
-    public function sub_nav_tabs() {
-        include_once "Lib/misc/nav_functions.php";
-        $menu = load_menu();
-        $tabs = '';
-        if(!empty($menu['_config_tabs'])) {
-            array_walk($menu['_config_tabs'], function(&$item, $key) {
-                $item['markup'] = makeListLink($item);
-            });
-            $tab_items = array_column($menu['_config_tabs'], 'markup');
-            $tabs = view('Modules/config/Views/tabs.php', array('items'=>$tab_items));
-            // return <html> with tabs
-        }
-        return $tabs;
-    }
-    */
 }
