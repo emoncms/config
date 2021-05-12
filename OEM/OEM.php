@@ -116,18 +116,34 @@ select {
 var conf = <?php echo !empty($conf) ? $conf: "{}"; ?>;
 // $("#conf").html(JSON.stringify(conf.interfacers.EmonPi, null, 2))
 
+var devicetype = "EmonPi";
 var templates = {};
+
+var app = false;
 
 $.getJSON( path+"Modules/config/OEM/templates.json?v=1", function( result ) {
     templates = result
-    // $("#conf").html(JSON.stringify(templates, null, 2))
     
-    var app = new Vue({
+    $.getJSON( path+"config/runtimeinfo", function( result ) {
+        // console.log(result.firmware_name)
+        
+        if (result.Emon!=undefined && result.Emon.firmware_name!=undefined) {
+            if (result.Emon.firmware_name=="RFM69Pi_n") {
+                devicetype = "RFM69Pi"
+            }
+        }
+        
+        load_app()
+    });
+});
+
+function load_app() {
+    app = new Vue({
         el: '#app',
         data: {
             template_names: Object.keys(templates),
             templates: templates,
-            devicetype: "EmonPi",
+            devicetype: devicetype,
             show_apply_configuration: false
         }, 
         methods: {
@@ -154,7 +170,7 @@ $.getJSON( path+"Modules/config/OEM/templates.json?v=1", function( result ) {
     if (JSON.stringify(app.templates["EmonPi"])!=JSON.stringify(conf.interfacers.EmonPi)) {
         app.show_apply_configuration = true;
     }
-});
+}
 
 
 </script>

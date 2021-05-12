@@ -3,10 +3,22 @@ var conf_nodes = JSON.parse(JSON.stringify(conf.nodes));
 
 var template_datalengths = {}
 var show_apply_configuration = {}
+var native = false
+var nodes = {}
 
-$.getJSON( path+"config/getnodes", function( result ) {
+$.getJSON( path+"config/runtimeinfo", function( result ) {
 
-    nodes = result;
+    if (result.Emon!=undefined) {
+        nodes = result.Emon.nodes;
+        
+        if (result.Emon.firmware_name!=undefined) {
+            if (result.Emon.firmware_name=="RFM69Pi_n") {
+                native = true;
+            }
+        }
+    }
+    
+    console.log(result)
 
     for (var z in nodes) {
         var fv = list_format_updated_obj(nodes[z].timestamp);
@@ -39,6 +51,17 @@ $.getJSON( path+"config/getnodes", function( result ) {
                 // Apply configuration
                 if (conf_nodes[n]==undefined) {
                     nodes[n].selected = nodes[n].options[0]
+                    
+                    // If rf69n native mode select available firmware ending _rf69n
+                    if (native) {
+                        for (var t in nodes[n].options) {
+                            if (nodes[n].options[t].includes("_rf69n")) {
+                                nodes[n].selected = nodes[n].options[t]
+                                break
+                            }
+                        }
+                    }
+                    
                     conf_nodes[n] = JSON.parse(JSON.stringify(templates[nodes[n].selected]))
                     conf_nodes[n].nodename += n
                     show_apply_configuration[n] = true

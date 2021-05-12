@@ -1,4 +1,4 @@
-<?php global $path; $v=5; ?>
+<?php global $path; $v=7; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 <script src="<?php echo $path; ?>Modules/config/nodes/format_time.js?v=<?php echo $v ?>"></script>
@@ -11,6 +11,13 @@
   <div class="alert" v-if="Object.keys(nodes).length === 0">
       <h3 class="alert-heading mt-0">No nodes detected</h3>
       <p>EmonHub has not yet received any node data, please check your emonhub configuration</p>
+  </div>
+
+  <div class="alert" style="padding-right:8px" v-else>
+      <h3 class="alert-heading mt-0">{{ Object.keys(nodes).length }} unconfigured nodes detected</h3>
+      <button class="btn btn-success" style="float:right">Apply all</button>
+      <p style="margin:15px 0 10px 0">Please review configuration suggestions below and either apply all or apply below selectively as required.</p>
+
   </div>
 
   <div v-for="(node,nodeid) in nodes" class="box">

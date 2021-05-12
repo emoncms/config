@@ -59,9 +59,9 @@ function config_controller()
 
     // ---------------------------------------------------------
     
-    if ($route->action == 'getnodes') {   
-        $route->format = "json";  
-        return json_decode(file_get_contents("http://localhost:8000/nodes"));
+    if ($route->action == 'runtimeinfo') {   
+        $route->format = "json";
+        return json_decode(file_get_contents("http://localhost:8000/runtimeinfo"));
     }
     
     if ($route->action == 'available') {   
