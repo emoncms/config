@@ -13,9 +13,9 @@
       <p>EmonHub has not yet received any node data, please check your emonhub configuration</p>
   </div>
 
-  <div class="alert" style="padding-right:8px" v-else>
-      <h3 class="alert-heading mt-0">{{ Object.keys(nodes).length }} unconfigured nodes detected</h3>
-      <button class="btn btn-success" style="float:right">Apply all</button>
+  <div class="alert" style="padding-right:8px" v-if="Object.keys(unconfigured_nodes).length>0">
+      <h3 class="alert-heading mt-0">{{ Object.keys(unconfigured_nodes).length }} unconfigured nodes detected</h3>
+      <button class="btn btn-warning" style="float:right" @click="apply_all()">Apply all</button>
       <p style="margin:15px 0 10px 0">Please review configuration suggestions below and either apply all or apply below selectively as required.</p>
 
   </div>

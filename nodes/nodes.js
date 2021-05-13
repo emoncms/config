@@ -5,6 +5,7 @@ var template_datalengths = {}
 var show_apply_configuration = {}
 var native = false
 var nodes = {}
+var unconfigured_nodes = {};
 
 $.getJSON( path+"config/runtimeinfo", function( result ) {
 
@@ -50,6 +51,7 @@ $.getJSON( path+"config/runtimeinfo", function( result ) {
             if (nodes[n].options.length) {
                 // Apply configuration
                 if (conf_nodes[n]==undefined) {
+                    unconfigured_nodes[n] = true
                     nodes[n].selected = nodes[n].options[0]
                     
                     // If rf69n native mode select available firmware ending _rf69n
@@ -96,7 +98,8 @@ $.getJSON( path+"config/runtimeinfo", function( result ) {
                 nodes: nodes, 
                 conf_nodes: conf_nodes, 
                 show_apply_configuration: show_apply_configuration,
-                add_datacode_select: 'h'
+                add_datacode_select: 'h',
+                unconfigured_nodes: unconfigured_nodes
             },
             methods: {
                 addDatacode: function(nodeid) {
@@ -138,10 +141,35 @@ $.getJSON( path+"config/runtimeinfo", function( result ) {
                     // Copy over node configuration
                     conf.nodes[nodeid] = JSON.parse(JSON.stringify(conf_nodes[nodeid]))
                     
+                    for (var n in unconfigured_nodes) {
+                        if (n==nodeid) {
+                            delete unconfigured_nodes[n]
+                        }
+                    }
+                    
                     // Save config
                     $.post( path+"config/save", { conf: JSON.stringify(conf) })
                         .done(function(r) {
                             Vue.set(app.show_apply_configuration,nodeid,false)
+                        })
+                        .fail(function(xhr, status, error) {
+                            alert("There was an error applying configuration")
+                        });
+                },
+                apply_all: function() {
+                    // Copy over node configuration
+                    for (var nodeid in unconfigured_nodes) {
+                        conf.nodes[nodeid] = JSON.parse(JSON.stringify(conf_nodes[nodeid]))
+                    }
+                    
+                    // Save config
+                    $.post( path+"config/save", { conf: JSON.stringify(conf) })
+                        .done(function(r) {
+                            for (var nodeid in unconfigured_nodes) {
+                                Vue.set(app.show_apply_configuration,nodeid,false)
+                            }
+                            app.unconfigured_nodes = {}
+                            
                         })
                         .fail(function(xhr, status, error) {
                             alert("There was an error applying configuration")
