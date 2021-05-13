@@ -9,71 +9,76 @@
 
 <div id="app">
   <div class="alert" v-if="Object.keys(nodes).length === 0">
-      <h3 class="alert-heading mt-0">No nodes detected</h3>
-      <p>EmonHub has not yet received any node data, please check your emonhub configuration</p>
+    <h3 class="alert-heading mt-0">No nodes detected</h3>
+    <p>EmonHub has not yet received any node data, please check your emonhub configuration</p>
   </div>
 
   <div class="alert" style="padding-right:8px" v-if="Object.keys(unconfigured_nodes).length>0">
-      <h3 class="alert-heading mt-0">{{ Object.keys(unconfigured_nodes).length }} unconfigured nodes detected</h3>
-      <button class="btn btn-warning" style="float:right" @click="apply_all()">Apply all</button>
-      <p style="margin:15px 0 10px 0">Please review configuration suggestions below and either apply all or apply below selectively as required.</p>
-
+    <h3 class="alert-heading mt-0">{{ Object.keys(unconfigured_nodes).length }} unconfigured nodes detected</h3>
+    <button class="btn btn-warning" style="float:right" @click="apply_all()">Apply all</button>
+    <p style="margin:15px 0 10px 0">Expand nodes to review configuration suggestions and either apply all or apply below selectively as required.</p>
   </div>
 
-  <div v-for="(node,nodeid) in nodes" class="box">
-    <div class="updated" style="color:#888">Last updated: <span :style="{color:node.time_color}">{{ node.time_value }}</span></div>
-    <div><b>Node: {{ nodeid }}</b></div>
-    <div class="rawdata"><b>Raw:</b> {{ node.data }}</div>
+  <div v-for="(node,nodeid) in nodes" class="box" style="cursor:pointer" @click="toggle(nodeid)">
+    <button v-if="show_apply_configuration[nodeid]" class="btn btn-warning" style="float:right" @click.stop="apply(nodeid)">Add</button>
+    <div class="updated" style="color:#888; line-height:30px; margin-right:20px">Last updated: <span :style="{color:node.time_color}">{{ node.time_value }}</span></div>
+    <div style="line-height:30px"><b><span class="icon-plus" style="margin:-1px 5px 0px 0px"></span> Node {{ nodeid }}:</b> {{ node.selected }}</div>
     
-    <button class="btn" style="float:right">Remove configuration</button>
-    <div class="input-append input-append" v-if="node.options.length>0">
-      <span class="add-on">Select configuration from template</span>
-      <select v-model="node.selected" @change="selectConfiguration(nodeid)">
-        <option v-for="item in node.options">{{ item }}</option>
-        <option v-if="node.selected=='custom'" value="custom">Custom</option>
-      </select>
-    </div>
+    <div class="detailed" v-if="node.visible">
       
-    <table v-if="conf_nodes[nodeid]" class="table table-bordered" style="font-size:14px; margin-bottom:10px">
-      <tr>
-        <th>Name</th>
-        <th>Datacode</th>
-        <th>Scale</th>
-        <th>Value</th>
-        <th>Unit</th>
-      </tr>
-      <tr v-for="(item,index) in conf_nodes[nodeid].rx.names">
-        <td width="20%"><input type="text" v-model="conf_nodes[nodeid].rx.names[index]" @change="update(nodeid)"></td>
-        <td width="20%">
-        <select v-model="conf_nodes[nodeid].rx.datacodes[index]" style="width:160px" @change="update(nodeid)">
-          <option value='h'>h: Integer</option>
-          <option value='l'>l: Long</option>
-          <option value='L'>L: Unsigned Long</option>
+      <div class="rawdata"><b>Raw:</b> {{ node.data }}</div>
+      
+      <!--<button class="btn" style="float:right">Remove configuration</button>-->
+      <div class="input-append input-append" v-if="node.options.length>0">
+        <span class="add-on">Select configuration from template</span>
+        <select v-model="node.selected" @change="selectConfiguration(nodeid)">
+          <option v-for="item in node.options">{{ item }}</option>
+          <option v-if="node.selected=='custom'" value="custom">Custom</option>
         </select>
-        </td>
-        <td width="20%"><input type="text" v-model:value="conf_nodes[nodeid].rx.scales[index]" style="width:60px" @change="update(nodeid)"></td>
-        <td width="20%">{{node.values[index]}}</td>
-        <td width="20%"><input type="text" v-model:value="conf_nodes[nodeid].rx.units[index]" style="width:60px" @change="update(nodeid)"></td>
-      </tr>
-    </table>
-    <div class="input-prepend input-append" v-if="node.bytes_available>=2">
-      <span class="add-on" style="width:220px">{{ node.bytes_available }} bytes available</span>
-      <select style="width:160px" v-model="add_datacode_select">
-        <option v-if="node.bytes_available>=2" value='h'>h: Integer</option>
-        <option v-if="node.bytes_available>=4" value='l'>l: Long</option>
-        <option v-if="node.bytes_available>=4" value='L'>L: Unsigned Long</option>
-      </select>      
-      <button class="btn" @click="addDatacode(nodeid)">Add</button>
+      </div>
+        
+      <table v-if="conf_nodes[nodeid]" class="table table-bordered" style="font-size:14px; margin-bottom:10px">
+        <tr>
+          <th>Name</th>
+          <th>Datacode</th>
+          <th>Scale</th>
+          <th>Value</th>
+          <th>Unit</th>
+        </tr>
+        <tr v-for="(item,index) in conf_nodes[nodeid].rx.names">
+          <td width="20%"><input type="text" v-model="conf_nodes[nodeid].rx.names[index]" @change="update(nodeid)"></td>
+          <td width="20%">
+          <select v-model="conf_nodes[nodeid].rx.datacodes[index]" style="width:160px" @change="update(nodeid)">
+            <option value='h'>h: Integer</option>
+            <option value='l'>l: Long</option>
+            <option value='L'>L: Unsigned Long</option>
+          </select>
+          </td>
+          <td width="20%"><input type="text" v-model:value="conf_nodes[nodeid].rx.scales[index]" style="width:60px" @change="update(nodeid)"></td>
+          <td width="20%">{{node.values[index]}}</td>
+          <td width="20%"><input type="text" v-model:value="conf_nodes[nodeid].rx.units[index]" style="width:60px" @change="update(nodeid)"></td>
+        </tr>
+      </table>
+      <div class="input-prepend input-append" v-if="node.bytes_available>=2">
+        <span class="add-on" style="width:220px">{{ node.bytes_available }} bytes available</span>
+        <select style="width:160px" v-model="add_datacode_select">
+          <option v-if="node.bytes_available>=2" value='h'>h: Integer</option>
+          <option v-if="node.bytes_available>=4" value='l'>l: Long</option>
+          <option v-if="node.bytes_available>=4" value='L'>L: Unsigned Long</option>
+        </select>      
+        <button class="btn" @click="addDatacode(nodeid)">Add</button>
+      </div>
+      <button class="btn" @click="removeDatacode(nodeid)" v-if="conf_nodes[nodeid] && conf_nodes[nodeid].rx.datacodes.length>0"><i class="icon-trash"></i> Remove last</button>
+      <div class="input-prepend input-append" v-if="conf_nodes[nodeid]">
+        <span class="add-on">Data whitening</span>
+        <span class="add-on"><input class="input" type="checkbox" v-model="conf_nodes[nodeid].rx.whitening" @change="update(nodeid)" /></span>
+      </div>
+
+      <button v-if="show_apply_configuration[nodeid]" class="btn btn-warning" style="float:right" @click="apply(nodeid)">Apply configuration</button>
     </div>
-    <button class="btn" @click="removeDatacode(nodeid)" v-if="conf_nodes[nodeid] && conf_nodes[nodeid].rx.datacodes.length>0"><i class="icon-trash"></i> Remove last</button>
-    <div class="input-prepend input-append" v-if="conf_nodes[nodeid]">
-      <span class="add-on">Data whitening</span>
-      <span class="add-on"><input class="input" type="checkbox" v-model="conf_nodes[nodeid].rx.whitening" @change="update(nodeid)" /></span>
-    </div>
-    
-    
-    <button v-if="show_apply_configuration[nodeid]" class="btn btn-warning" style="float:right" @click="apply(nodeid)">Apply configuration</button>
-    <div style="clear:both"></div>
+
+    <div style="clear:both"></div>   
+
   </div>
 </div>
 

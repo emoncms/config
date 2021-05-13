@@ -30,6 +30,7 @@ $.getJSON( path+"config/runtimeinfo", function( result ) {
         nodes[z].data = nodes[z].data.join(", ")
         
         nodes[z].datacodes_length = 0
+        nodes[z].visible = false
     }
 
     $.getJSON( path+"config/available", function( result ) {
@@ -193,6 +194,9 @@ $.getJSON( path+"config/runtimeinfo", function( result ) {
                     if (JSON.stringify(conf_nodes[nodeid])!=JSON.stringify(conf.nodes[nodeid])) {
                         Vue.set(this.show_apply_configuration,nodeid,true)
                     }
+                },
+                toggle: function(nodeid) {
+                    nodes[nodeid].visible = !nodes[nodeid].visible
                 }
             }
         });
