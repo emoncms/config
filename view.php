@@ -1,79 +1,11 @@
 <?php global $path; ?>
 <style>
-pre {
-    width:100%;
-    height:400px;
-    
-    margin:0px;
-    padding:0px;
-    font-size:16px;
-    color:#fff;
-    background-color:#300a24;
-    overflow: scroll;
-    overflow-x: hidden;
-    
-    font-size:16px;
-}
-#emoncms-console-log {
-    padding-left:20px;
-    padding-top:20px;
-}
-#emonhub-console-log {
-    padding-left:20px;
-    padding-top:20px;
-}
-#log-level-dropdown {
-    position: absolute;
-    right: .2rem;
-    bottom: 0;
-}
-#log-level-dropdown .dropdown-menu {
-    background: 0;
-    background: transparent;
-    border-radius: 0;
-    border: 0;
-    box-shadow: none;
-    margin: 0;
-}
-#log-level-dropdown .dropdown-menu .active {
-    font-weight: bold;
-}
-#log-level-dropdown .dropdown-menu .btn {
-    border: 0;
-    border-radius: 0;
-    background-image: none;
-}
-#log-level-dropdown li:first-child .btn {
-    border-radius: .3em .3em 0 0;
-}
-#log-level-dropdown li:last-child .btn {
-    border-radius: 0 0 .3em .3em;
-}
 section {
     position: relative;
 }
 .dropdown-menu-right {
     right: 0 !important;
     left: initial;
-}
-#snackbar {
-    visibility: hidden;
-    min-width: 250px;
-    margin-left: -125px;
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    border-radius: 2px;
-    padding: 16px;
-    position: fixed;
-    z-index: 1;
-    left: 50%;
-    bottom: 30px;
-    font-size: 17px;
-}
-#snackbar.show {
-    visibility: visible;
-    animation: fadein 0.5s, fadeout 0.5s 2.5s;
 }
 </style>
   <?php if(!empty($tabs)) echo $tabs ?>
@@ -102,8 +34,8 @@ section {
       </div>
       <section>
         <h4>Log:</h4>
-        <pre id="emonhublogviewpre"><div id="emonhub-console-log"></div></pre>
-        <div id="log-level-dropdown" class="dropup dropdown">
+        <pre id="emonhublogviewpre" class="log" style="height:500px"><div id="emonhub-console-log"></div></pre>
+        <div id="log-level" class="dropup dropdown">
             <a class="btn btn-small dropdown-toggle btn-inverse text-uppercase" data-toggle="dropdown" href="#" title="Change the logging level">
             <span class="log-level-name">Log Level: <?php echo $level ?></span>
             <span class="caret"></span>
@@ -208,7 +140,7 @@ function emonhublog_refresh()
 
 
 $(function(){
-    $('#log-level-dropdown ul li a').click(function(event){
+    $('#log-level ul li a').click(function(event){
         event.preventDefault();
         var $btn = $(this);
         var $toggle = $btn.parents('ul').prev('.btn');
