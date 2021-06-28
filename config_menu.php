@@ -4,8 +4,8 @@ global $session;
 if ($session["write"]) {
     $menu["setup"]["l2"]['config'] = array(
         "name"=>"Emonhub",
-        "href"=>"config/OEM",
-        "href_active"=>true,
+        "href"=>"config",
+        "default"=>"config/OEM",
         "order"=>-1, 
         "icon"=>"bullhorn",
         
