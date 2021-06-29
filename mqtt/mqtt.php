@@ -31,51 +31,51 @@ select {
 <p>Send data over MQTT from EmonHub</p>
 
 <div id="app">
-  <div class="box">
-    <h4>Local</h4>
+  <div class="box" v-for="interfacer,interfacer_name in interfacers" v-if="interfacer.Type=='EmonHubMqttInterfacer'">
+    <h4>{{ interfacer_name }}</h4>
 
     <p><b>Init settings</b></p>
 
     <div class="input-prepend">
       <span class="add-on">Host</span>
-      <input type="text" v-model="mqtt_template.init_settings.mqtt_host" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].init_settings.mqtt_host" @change="update" />
     </div><br>
 
     <div class="input-prepend">
       <span class="add-on">Port</span>
-      <input type="text" v-model="mqtt_template.init_settings.mqtt_port" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].init_settings.mqtt_port" @change="update" />
     </div><br>
 
     <div class="input-prepend">
       <span class="add-on">User</span>
-      <input type="text" v-model="mqtt_template.init_settings.mqtt_user" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].init_settings.mqtt_user" @change="update" />
     </div><br>
     
     <div class="input-prepend">
       <span class="add-on">Password</span>
-      <input type="text" v-model="mqtt_template.init_settings.mqtt_passwd" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].init_settings.mqtt_passwd" @change="update" />
     </div><br>
 
     <p><b>Runtime settings</b></p>
 
     <div class="input-prepend">
       <span class="add-on">Node format enable</span>
-      <input type="text" v-model="mqtt_template.runtimesettings.node_format_enable" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].runtimesettings.node_format_enable" @change="update" />
     </div><br>
 
     <div class="input-prepend">
       <span class="add-on">Node format basetopic</span>
-      <input type="text" v-model="mqtt_template.runtimesettings.node_format_basetopic" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].runtimesettings.node_format_basetopic" @change="update" />
     </div><br>
 
     <div class="input-prepend">
       <span class="add-on">Node:var format enable</span>
-      <input type="text" v-model="mqtt_template.runtimesettings.nodevar_format_enable" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].runtimesettings.nodevar_format_enable" @change="update" />
     </div><br>
     
     <div class="input-prepend">
       <span class="add-on">Node:var format basetopic</span>
-      <input type="text" v-model="mqtt_template.runtimesettings.nodevar_format_basetopic" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].runtimesettings.nodevar_format_basetopic" @change="update" />
     </div><br>
 
     <button v-if="show_apply_configuration" class="btn btn-warning" @click="apply()">Apply configuration</button>
@@ -87,28 +87,46 @@ select {
 -->
 <script> 
 var conf = <?php echo !empty($conf) ? $conf: "{}"; ?>;
-// $("#conf").html(JSON.stringify(conf.interfacers.MQTT, null, 2));
 
-var mqtt_template = {};
+var EmonHubMqttInterfacer_count = 0;
+
+// 1. Find EmonHubOEMInterfacer
+for (var interfacer_name in conf.interfacers) {
+    if (conf.interfacers[interfacer_name].Type=='EmonHubMqttInterfacer') {
+        console.log("Found EmonHubMqttInterfacer: "+interfacer_name);
+        EmonHubMqttInterfacer_count++;
+    }
+}
+
+var template = {};
+var show_apply_configuration = false;
 
 $.getJSON( path+"Modules/config/mqtt/template.json?v=1", function( result ) {
-    mqtt_template = result
-    $("#conf").html(JSON.stringify(mqtt_template, null, 2));
+    template = result
+    
+    // If no EmonHubOEMInterfacer found, add a default copy from templates
+    if (EmonHubMqttInterfacer_count==0) {
+        if (conf.interfacers.MQTT == undefined) {
+            conf.interfacers.MQTT = JSON.parse(JSON.stringify(template));
+            show_apply_configuration = true;
+            console.log("EmonHubMqttInterfacer not found, applying default from template");
+        } else {
+            alert("Error: An interfacer called MQTT already exists but is not type EmonHubMqttInterfacer");
+        }
+    }
     
     var app = new Vue({
         el: '#app',
         data: {
-            mqtt_template: mqtt_template,
-            show_apply_configuration: false
+            interfacers: conf.interfacers,
+            show_apply_configuration: show_apply_configuration
         },
         methods: {
             update: function() {
-                if (JSON.stringify(this.mqtt_template)!=JSON.stringify(conf.interfacers.MQTT)) {
-                    this.show_apply_configuration = true;
-                }
+                this.show_apply_configuration = true;
             },
             apply: function() {
-                conf.interfacers.MQTT = JSON.parse(JSON.stringify(this.mqtt_template));           
+                conf.interfacers = this.interfacers;      
                 // Save config
                 $.post( path+"config/save", { conf: JSON.stringify(conf) })
                     .done(function(r) {
@@ -120,9 +138,5 @@ $.getJSON( path+"Modules/config/mqtt/template.json?v=1", function( result ) {
             }
         }
     });
-    
-    if (JSON.stringify(app.mqtt_template)!=JSON.stringify(conf.interfacers.MQTT)) {
-        app.show_apply_configuration = true;
-    }
 });
 </script>

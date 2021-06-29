@@ -123,7 +123,6 @@ var templates = {};
 var app = false;
 
 var EmonHubOEMInterfacer_count = 0;
-var selected_template = {};
 var show_apply_configuration = {};
 
 // 1. Find EmonHubOEMInterfacer
@@ -141,7 +140,6 @@ $.getJSON( path+"Modules/config/OEM/templates.json?v=1", function( result ) {
     if (EmonHubOEMInterfacer_count==0) {
         if (conf.interfacers.Emon == undefined) {
             conf.interfacers.Emon = JSON.parse(JSON.stringify(templates["EmonPi"]));
-            selected_template.Emon = "EmonPi";
             console.log("EmonHubOEMInterfacer not found, applying default from template");
         } else {
             alert("Error: An interfacer called Emon already exists but is not type EmonHubOEMInterfacer");

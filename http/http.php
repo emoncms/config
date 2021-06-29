@@ -31,14 +31,14 @@ select {
 <p>Configure emonhub to send data to remote emoncms account (e.g emoncms.org)<p>
 
 <div id="app">
-  <div class="box">
-    <h4>Emoncms.org</h4>
+  <div class="box" v-for="interfacer,interfacer_name in interfacers" v-if="interfacer.Type=='EmonHubEmoncmsHTTPInterfacer'">
+    <h4>{{ interfacer_name }}</h4>
 
     <p><b>Runtime settings</b></p>
 
     <div class="input-prepend">
       <span class="add-on">Emoncms Host URL</span>
-      <input type="text" v-model="http_template.runtimesettings.url" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].runtimesettings.url" @change="update" />
     </div><br>
     
     <p style="font-size:14px">Enter username, password and click connect to fetch emoncms account apikey</p>
@@ -53,26 +53,26 @@ select {
       <input type="text" v-model="emoncms_password" @change="update" />
     </div><br>
     
-    <button class="btn btn-warning" @click="connect()">Connect</button><br><br>
+    <button class="btn btn-primary" @click="connect(interfacer_name)">Fetch API Key</button><br><br>
 
     <div class="input-prepend">
       <span class="add-on">Write API key</span>
-      <input type="text" v-model="http_template.runtimesettings.apikey" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].runtimesettings.apikey" @change="update" />
     </div><br>
 
     <div class="input-prepend">
       <span class="add-on">Send data</span>
-      <input type="text" v-model="http_template.runtimesettings.senddata" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].runtimesettings.senddata" @change="update" />
     </div><br>
     
     <div class="input-prepend">
       <span class="add-on">Send status</span>
-      <input type="text" v-model="http_template.runtimesettings.sendstatus" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].runtimesettings.sendstatus" @change="update" />
     </div><br>
 
     <div class="input-prepend">
       <span class="add-on">Send interval (seconds)</span>
-      <input type="text" v-model="http_template.runtimesettings.sendinterval" @change="update" />
+      <input type="text" v-model="interfacers[interfacer_name].runtimesettings.sendinterval" @change="update" />
     </div><br>
 
     <button v-if="show_apply_configuration" class="btn btn-warning" @click="apply()">Apply configuration</button>
@@ -86,30 +86,46 @@ select {
 
 <script> 
 var conf = <?php echo !empty($conf) ? $conf: "{}"; ?>;
-// $("#conf").html(JSON.stringify(conf.interfacers.emoncmsorg, null, 2));
 
-var http_template = {};
+var EmonHubEmoncmsHTTPInterfacer_count = 0;
+
+// 1. Find EmonHubOEMInterfacer
+for (var interfacer_name in conf.interfacers) {
+    if (conf.interfacers[interfacer_name].Type=='EmonHubEmoncmsHTTPInterfacer') {
+        console.log("Found EmonHubEmoncmsHTTPInterfacer: "+interfacer_name);
+        EmonHubEmoncmsHTTPInterfacer_count++;
+    }
+}
+
+var template = {};
 
 $.getJSON( path+"Modules/config/http/template.json?v=1", function( result ) {
-    http_template = result
-    $("#conf").html(JSON.stringify(http_template, null, 2));
+    template = result
+
+    // If no EmonHubOEMInterfacer found, add a default copy from templates
+    if (EmonHubEmoncmsHTTPInterfacer_count==0) {
+        if (conf.interfacers.Emoncms == undefined) {
+            conf.interfacers.Emoncms = JSON.parse(JSON.stringify(template));
+            console.log("EmonHubEmoncmsHTTPInterfacer not found, applying default from template");
+        } else {
+            alert("Error: An interfacer called Emoncms already exists but is not type EmonHubEmoncmsHTTPInterfacer");
+        }
+    }
     
     var app = new Vue({
         el: '#app',
         data: {
-            http_template: http_template,
+            interfacers: conf.interfacers,
             show_apply_configuration: false,
             emoncms_username: "",
             emoncms_password: ""
         },
         methods: {
             update: function() {
-                if (JSON.stringify(this.http_template)!=JSON.stringify(conf.interfacers.emoncmsorg)) {
-                    this.show_apply_configuration = true;
-                }
+                this.show_apply_configuration = true;
             },
             apply: function() {
-                conf.interfacers.emoncmsorg = JSON.parse(JSON.stringify(this.http_template));           
+                conf.interfacers = this.interfacers;
                 // Save config
                 $.post( path+"config/save", { conf: JSON.stringify(conf) })
                     .done(function(r) {
@@ -119,21 +135,33 @@ $.getJSON( path+"Modules/config/http/template.json?v=1", function( result ) {
                         alert("There was an error applying configuration")
                     });            
             },
-            connect: function() {
-                $.ajax({ type: "POST", url: path+"config/remoteauth", data: "host="+app.http_template.runtimesettings.url+"&username="+app.emoncms_username+"&password="+app.emoncms_username, async: true, success: function(result){ 
-                    if (result.success!=undefined && result.success) {
-                        alert(result.apikey_write);
-                        app.http_template.runtimesettings.apikey = result.apikey_write
-                    } else {
-                        alert("Emoncms account does not exist");
-                    }
-                }});  
+            connect: function(interfacer_name) {
+            
+                $.post( path+"config/remoteauth", { 
+                        host: this.interfacers[interfacer_name].runtimesettings.url,
+                        username: app.emoncms_username,
+                        password: app.emoncms_password
+                    })
+                    .done(function(result) {
+                        console.log(result)
+                        if (result.success!=undefined) {
+                            if (result.success) {
+                                alert("Authentication successful, API key copied");
+                                app.interfacers[interfacer_name].runtimesettings.apikey = result.apikey_write
+                            } else {
+                                console.log("here");
+                                alert(result.message);
+                            }
+                        } else {
+                            alert(result);
+                        }
+                    })
+                    .fail(function(xhr, status, error) {
+                        alert("Authentication error")
+                        console.log(status)
+                    });
             }
         }
     });
-    
-    if (JSON.stringify(app.http_template)!=JSON.stringify(conf.interfacers.emoncmsorg)) {
-        app.show_apply_configuration = true;
-    }
 });
 </script>
