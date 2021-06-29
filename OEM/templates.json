@@ -1,6 +1,7 @@
 {
   "EmonPi": {
     "Type": "EmonHubOEMInterfacer",
+    "Template": "EmonPi",
     "init_settings": {
       "com_port": "/dev/ttyAMA0",
       "com_baud": 38400
@@ -19,6 +20,7 @@
   },
   "EmonTx": {
     "Type": "EmonHubOEMInterfacer",
+    "Template": "EmonTx",
     "init_settings": {
       "com_port": "/dev/ttyAMA0",
       "com_baud": 38400
@@ -36,6 +38,7 @@
     }
   },
   "RFM69Pi": {
+    "Template": "RFM69Pi",
     "Type": "EmonHubOEMInterfacer",
     "init_settings": {
       "com_port": "/dev/ttyAMA0",
@@ -50,6 +53,7 @@
     }
   },
   "STM32_MAX": {
+    "Template": "STM32_MAX",
     "Type": "EmonHubOEMInterfacer",
     "init_settings": {
       "com_port": "/dev/ttyAMA0",
