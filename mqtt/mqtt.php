@@ -117,7 +117,7 @@ $.getJSON( path+"Modules/config/mqtt/template.json?v=2", function( result ) {
     if (EmonHubMqttInterfacer_count==0) {
         if (conf.interfacers.MQTT == undefined) {
             conf.interfacers.MQTT = JSON.parse(JSON.stringify(template));
-            show_apply_configuration = true;
+            show_apply_configuration.MQTT = true;
             console.log("EmonHubMqttInterfacer not found, applying default from template");
         } else {
             alert("Error: An interfacer called MQTT already exists but is not type EmonHubMqttInterfacer");
