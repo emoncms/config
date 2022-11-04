@@ -7,6 +7,8 @@ section {
     right: 0 !important;
     left: initial;
 }
+.log { padding:20px}
+
 </style>
   <?php if(!empty($tabs)) echo $tabs ?>
 
@@ -27,14 +29,17 @@ section {
   </div>
 
   <div id="emonhublogview" style="display:none">
-
       <div class="input-prepend input-append">
-          <span class="add-on">Auto update log view</span>
-          <button class="btn autoupdate-toggle">ON</button>
+          <span class="add-on">Auto update</span>
+          <button class="btn auto-update-toggle btn-success">ON</button>
+      </div>
+      <div class="input-prepend input-append">
+          <span class="add-on">Auto scroll</span>
+          <button class="btn auto-scroll-toggle btn-success">ON</button>
       </div>
       <section>
         <h4>Log:</h4>
-        <pre id="emonhublogviewpre" class="log" style="height:500px"><div id="emonhub-console-log"></div></pre>
+        <pre id="emonhub-console-log" class="log" style="height:600px"></pre>
         <div id="log-level" class="dropup dropdown">
             <a class="btn btn-small dropdown-toggle btn-inverse text-uppercase" data-toggle="dropdown" href="#" title="Change the logging level">
             <span class="log-level-name">Log Level: <?php echo $level ?></span>
@@ -63,7 +68,12 @@ section {
 var config = "";
 
 var emonhublog_updater = false;
-var autoupdate = false;
+var logfile_position = 0;
+const logdiv = document.getElementById("emonhub-console-log")
+
+var autoupdate = true;
+var auto_scroll = true;
+
 $("#emonhublogview").show();
 $("#editor").hide();
 emonhublog_refresh();
@@ -92,14 +102,22 @@ $("#restart").click(function(){
   $.ajax({ url: path+"config/restart", dataType: 'text', async: false});
 });
 
-$(".autoupdate-toggle").click(function(){
+$(".auto-update-toggle").click(function(){
     if (autoupdate==true) {
-        autoupdate = false;
         disable_autoupdate();
     } else {
-        autoupdate = true;
         enable_autoupdate();
     }
+    auto_update_button(autoupdate);
+});
+
+$(".auto-scroll-toggle").click(function(){
+    if (auto_scroll==true) {
+        auto_scroll = false;
+    } else {
+        auto_scroll = true;
+    }
+    auto_scroll_button(auto_scroll);
 });
 
 $("#show-editor").click(function(){
@@ -109,31 +127,54 @@ $("#show-editor").click(function(){
 });
 
 $("#show-emonhublogview").click(function(){
-    if (!autoupdate) enable_autoupdate();
+    enable_autoupdate();
     emonhublog_refresh();
     $("#emonhublogview").show();
     $("#editor").hide();
 });
 
+$("#emonhub-console-log").scroll(function() {
+
+    if (auto_scroll) {
+        if (last_set_height!=logdiv.scrollTop) {
+            auto_scroll = false;
+            auto_scroll_button(auto_scroll);
+        }
+    } else {
+        if (((logdiv.scrollHeight-logdiv.scrollTop)-640)<20) {
+            auto_scroll = true;
+            auto_scroll_button(auto_scroll);
+        }
+    }
+
+});
 
 function enable_autoupdate() {
     autoupdate = true;
-    $(".autoupdate-toggle").html("ON");
+    clearInterval(emonhublog_updater);
     emonhublog_updater = setInterval(emonhublog_refresh,1000);
 }
 
 function disable_autoupdate() {
     autoupdate = false;
-    $(".autoupdate-toggle").html("OFF");
-    clearInterval(emonhublog_updater);}
+    clearInterval(emonhublog_updater);
+}
 
 function emonhublog_refresh()
 {
     $.ajax({
-        url: path+"config/getemonhublog",
+        url: path+"config/getemonhublog?pos="+logfile_position,
         dataType: 'text', async: true,
         success: function(data) {
-            $("#emonhub-console-log").html(data+"\n\n");
+            var firstnewline = data.indexOf("\n");
+            logfile_position = parseInt(data.substr(0, firstnewline));
+            data = data.substr(firstnewline+1,data.length);
+            logdiv.textContent += data;
+            
+            if (auto_scroll) {
+                logdiv.scrollTop = logdiv.scrollHeight;
+                last_set_height = logdiv.scrollTop;
+            }
         }
     });
 }
@@ -160,7 +201,7 @@ $(function(){
                 notify(message, 'error');
             }
         })
-        .error(function(xhr,error,message){
+        .fail(function(xhr,error,message){
             notify(gettext('Error sending data'));
         });
     })
@@ -198,6 +239,22 @@ function getTranslations(){
     return {
         'Log level: %s': "<?php echo _('Log level: %s') ?>",
         'Error sending data': "<?php echo _('Error sending data') ?>"
+    }
+}
+
+function auto_update_button(state) {
+    if (state==true) {
+        $(".auto-update-toggle").html("ON").removeClass('btn-warning').addClass('btn-success');
+    } else {
+        $(".auto-update-toggle").html("OFF").removeClass('btn-success').addClass('btn-warning');
+    }
+}
+
+function auto_scroll_button(state) {
+    if (state==true) {
+        $(".auto-scroll-toggle").html("ON").removeClass('btn-warning').addClass('btn-success');
+    } else {
+        $(".auto-scroll-toggle").html("OFF").removeClass('btn-success').addClass('btn-warning');
     }
 }
 </script>

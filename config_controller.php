@@ -61,13 +61,42 @@ function config_controller()
     
     else if ($route->action == 'getemonhublog') {
         $route->format = "text";
-        ob_start();
+        
+        $start_pos = 0;
+        if(isset($_GET['pos'])) {
+            $start_pos = (int) $_GET['pos'];
+            if ($start_pos<0) $start_pos = 0;
+        }
+        
         if (file_exists($emonhub_logfile)) {
-            passthru("tail -30 $emonhub_logfile");
+            $size = filesize($emonhub_logfile);
+            if ($fh = fopen($emonhub_logfile,'r')) {
+                
+                if ($start_pos==0) {
+                    $start_pos = $size-10000;
+                    // Find first new line
+                    fseek($fh,$start_pos);
+                    $result = fread($fh,1000);
+                    $pos = strpos($result,"\n");
+                    $start_pos+=$pos+1;
+                }
+                
+                $bytes_to_read = $size-$start_pos;
+                
+                if ($bytes_to_read>0) {
+                    fseek($fh,$start_pos);
+                    $result = fread($fh,$bytes_to_read);
+                }
+                
+                fclose($fh);
+                return $size."\n".$result;
+            }
+
         } else {
+            ob_start();
             passthru("journalctl -u emonhub -n 30 --no-pager");
-        }   
-        $result = trim(ob_get_clean());
+            return trim(ob_get_clean());
+        }
     }
     
     
