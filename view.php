@@ -1,4 +1,15 @@
-<?php global $path; ?>
+<?php 
+global $path; 
+
+$level = "DEBUG";
+$log_levels = array(
+    1=>"DEBUG",
+    2=>"INFO",
+    3=>"WARNING",
+    4=>"ERROR",
+    5=>"CRITICAL"
+);
+?>
 <style>
 section {
     position: relative;
@@ -13,7 +24,7 @@ section {
   <?php if(!empty($tabs)) echo $tabs ?>
 
   <h2>EmonHub</h2>
-  Decodes data received from RFM69Pi / emonPi and post to MQTT + Emoncms
+  Emonhub provides the interface between hardware and emoncms inputs. Read from serial, spi, modbus, mbus and more.
   <br><br>
   <div class="input-prepend input-append" style="float:right">
       <button class="btn btn-info" id="show-emonhublogview">View log</button>
@@ -61,8 +72,6 @@ section {
       </div>
       <a href="https://github.com/openenergymonitor/emonhub" target="_blank">EmonHub Documentation</a>
   </div>
-
-<div id="snackbar"></div>
 <script>
 
 var config = "";
@@ -73,6 +82,11 @@ const logdiv = document.getElementById("emonhub-console-log")
 
 var autoupdate = true;
 var auto_scroll = true;
+
+var log_level = "DEBUG";
+var log_levels = <?php echo json_encode($log_levels); ?>;
+
+var downloaded_log = "";
 
 $("#emonhublogview").show();
 $("#editor").hide();
@@ -99,7 +113,7 @@ $("#save").click(function(){
 
 $("#restart").click(function(){
   alert("Restarting EmonHub...");
-  $.ajax({ url: path+"config/restart", dataType: 'text', async: false});
+  $.ajax({ url: path+"admin/service/restart?name=emonhub", dataType: 'text', async: false});
 });
 
 $(".auto-update-toggle").click(function(){
@@ -160,6 +174,30 @@ function disable_autoupdate() {
     clearInterval(emonhublog_updater);
 }
 
+function filter_log_level(data_in, level) {
+  if (level=="DEBUG") return data_in;
+  var filter = [];
+  if (level=="INFO") filter = ["INFO","WARNING","ERROR","CRITICAL"];
+  if (level=="WARNING") filter = ["WARNING","ERROR","CRITICAL"];
+  if (level=="ERROR") filter = ["ERROR","CRITICAL"];
+  if (level=="CRITICAL") filter = ["CRITICAL"];
+  
+  var lines_in = data_in.split("\n");
+  
+  if (lines_in.length==1 && lines_in[0]=="") return "";
+  
+  var lines_out = [];
+  for (var z=0; z<lines_in.length; z++) {
+    for (var f in filter) {
+      if (lines_in[z].indexOf(filter[f])!=-1) {
+        lines_out.push(lines_in[z]);
+      }
+    }
+  }
+  if (lines_out.length==0) return "";
+  return lines_out.join("\n")+"\n";
+}
+
 function emonhublog_refresh()
 {
     $.ajax({
@@ -169,7 +207,9 @@ function emonhublog_refresh()
             var firstnewline = data.indexOf("\n");
             logfile_position = parseInt(data.substr(0, firstnewline));
             data = data.substr(firstnewline+1,data.length);
-            logdiv.textContent += data;
+            
+            downloaded_log += data;
+            logdiv.textContent += filter_log_level(data,log_level);
             
             if (auto_scroll) {
                 logdiv.scrollTop = logdiv.scrollHeight;
@@ -186,39 +226,22 @@ $(function(){
         var $btn = $(this);
         var $toggle = $btn.parents('ul').prev('.btn');
         var key = $btn.data('key');
-        var data = {level:key};
-        $.post( path+"config/loglevel", data)
-        .done(function(response) {
-            // make the dropdown toggle show the new setting
-            if(response.hasOwnProperty('success') && response.success!==false) {
-                $toggle.find('.log-level-name').text(gettext('log level: %s').replace('%s',response['log-level']));
-                // highlight the current dropdown element as active
-                $btn.addClass('active');
-                $btn.parents('li').siblings().find('a').removeClass('active');
-                notify(gettext('Log level set to: %s').replace('%s',response['log-level']),'success');
-            } else {
-                let message = response.hasOwnProperty('message') ? response.message: '';
-                notify(message, 'error');
-            }
-        })
-        .fail(function(xhr,error,message){
-            notify(gettext('Error sending data'));
-        });
+       
+        $toggle.find('.log-level-name').text(gettext('log level: %s').replace('%s',log_levels[""+key]));
+        $btn.addClass('active');
+        $btn.parents('li').siblings().find('a').removeClass('active');
+        
+        log_level = log_levels[""+key];
+        
+        logdiv.textContent = filter_log_level(downloaded_log,log_level);
+        
+        if (auto_scroll) {
+            logdiv.scrollTop = logdiv.scrollHeight;
+            last_set_height = logdiv.scrollTop;
+        }
     })
 })
-function snackbar(text) {
-    var snackbar = document.getElementById("snackbar");
-    snackbar.innerHTML = text;
-    snackbar.className = "show";
-    setTimeout(function () {
-        snackbar.className = snackbar.className.replace("show", "");
-    }, 3000);
-}
 
-function notify(message, css_class, more_info) {
-    // @todo: show more information in the user notifications
-    snackbar(message);
-}
 /**
  * emulate the php gettext function for replacing php strings in js
  */

@@ -14,46 +14,21 @@
 
 function config_controller()
 {
-    global $route, $session, $redis;
-    $result = false;
-    require "Modules/config/config_model.php";
-    $config = new Config();
+    global $route, $session, $redis, $path;
     
-    // $tabs = $config->sub_nav_tabs();
-    // @todo: not sure if tabs should be used? Routes not complete for each tab in config_menu.php
-    $tabs = ''; // override with blank string
-    
-    $log_levels = $config->log_levels;
-    $emonhub_config_file = $config->config_file;
-    $emonhub_logfile = $config->logfile;
-    $restart_log = "/var/log/emoncms/".$config->restart_log_name;
+    $emonhub_config_file = "/etc/emonhub/emonhub.conf";
+    $emonhub_logfile = "/var/log/emonhub/emonhub.log";
+    $emonhub_restart_log = "emonhub-restart.log";
 
     if (!$session['write']) return false;
     
     if ($route->action == '') {
         $route->format = "html";
-        // $route->submenu = view("Modules/config/sidebar.php");
-        return view("Modules/config/view.php", array('log_levels'=>$log_levels,'tabs'=>$tabs, 'level'=> $config->get_log_level()));
+        return view("Modules/config/view.php", array());
     }
 
     // ---------------------------------------------------------
-
-    if ($route->action == 'editor') {
-        $route->format = "html";
-        $conf = $redis->get("get:emonhubconf");
-        return view("Modules/config/editor.php", array("conf"=>$conf,'tabs'=>$tabs));
-    }
-    if ($route->action == 'calibration') {
-        $route->format = "html";
-        $conf = $redis->get("get:emonhubconf");
-        return view("Modules/config/calibration.php", array("conf"=>$conf,'tabs'=>$tabs));
-    }
-    if ($route->action == 'connect') {
-        $route->format = "html";
-        $conf = $redis->get("get:emonhubconf");
-        return view("Modules/config/connect.php", array("conf"=>$conf,'tabs'=>$tabs));
-    }
-    
+        
     else if ($route->action == 'get') {
         $route->format = "text";
         return file_get_contents($emonhub_config_file);
@@ -84,6 +59,7 @@ function config_controller()
                 
                 $bytes_to_read = $size-$start_pos;
                 
+                $result = "";
                 if ($bytes_to_read>0) {
                     fseek($fh,$start_pos);
                     $result = fread($fh,$bytes_to_read);
@@ -92,14 +68,9 @@ function config_controller()
                 fclose($fh);
                 return $size."\n".$result;
             }
-
-        } else {
-            ob_start();
-            passthru("journalctl -u emonhub -n 30 --no-pager");
-            return trim(ob_get_clean());
         }
+        return "0\nemonhub.log does not exist";
     }
-    
     
     else if ($route->action == 'set' && isset($_POST['config'])) {
         $route->format = "text";
@@ -110,69 +81,6 @@ function config_controller()
         return "Config Saved";
     }
     
-    else if ($route->action == 'loglevel') {
-        $route->format = "json";
-        $success = true;
-        $message = '';
-
-        // load the settings.php as text file
-        $file = file_get_contents($emonhub_config_file);
-        $matches = array();
-
-        if($route->method === 'POST') {
-            if(!empty(post('level'))) {
-                $level = post('level');
-                if (is_file($emonhub_config_file) && is_writable($emonhub_config_file)) {
-                    $log_level = intval(post('level'));
-                    if(array_key_exists($log_level, $log_levels)) {
-                        // replace the value of the `loglevel` variable
-                        preg_match('/^\s*loglevel = (.*)$/m', $file, $matches);
-                        if(!empty($matches)) {
-                            $file = str_replace($matches[1], $log_levels[$log_level], $file);
-                            $bytes = file_put_contents($emonhub_config_file, $file);
-                            $success = $bytes && $bytes > 0;
-                            // $log->error("EmonHub log level changed: $log_level");
-                            $message = _('Changes Saved');
-                        } else {
-                            $message = sprintf(_('"loglevel" not found in: %s'), $emonhub_config_file);
-                        }
-                    } else {
-                        $message = sprintf(_('New log level out of range. must be one of %s'), implode(', ', array_keys($log_levels)));
-                    }
-                } else {
-                    $log_level = null;
-                    $success = false;
-                    $message = sprintf(_('Not able to write to: %s'), $emonhub_config_file);
-                }
-            } else {
-                $message = _('No new log level supplied');
-            }
-        } else {
-            // was not a POST return current level
-            $file_log_level = $config->get_log_level();
-            if(!empty($file_log_level)) {
-                $log_level = array_search($file_log_level, $log_levels);
-                if($log_level === false) {
-                    $message = sprintf(_('"loglevel" in %s not in list'), $emonhub_config_file);
-                } else {
-                    $success = true;
-                }
-            } else {
-                $success = false;
-                $log_level = null;
-                $message = sprintf(_('"loglevel" not found in: %s'), $emonhub_config_file);
-            }
-            $log_level = intval($log_level);
-        }
-        $result = array (
-            'success' => $success,
-            'log-level' => !empty($log_levels[$log_level]) ? $log_levels[$log_level]: 'NULL',
-            'log-level-id' =>  $log_level,
-            'message' => $message
-        );
-        return $result;
-    }
-    
     else if ($route->action == 'downloadlog')
     {
         header("Content-Type: application/octet-stream");
@@ -181,34 +89,15 @@ function config_controller()
         header("Pragma: no-cache");
         header("Expires: 0");
         flush();
-        if (file_exists($emonhub_logfile))
-        {
+        if (file_exists($emonhub_logfile)) {
           ob_start();
           readfile($emonhub_logfile);
           echo(trim(ob_get_clean()));
-        }
-        else
-        {
-          echo($emonhub_logfile . " does not exist!");
-          passthru("journalctl -u emonhub --no-pager");        }
-        exit;
-    }
-
-    // emonHub restart requires added to /etc/sudoers:
-    // www-data ALL=(ALL) NOPASSWD:service emonhub restart
-    else if ($route->action == 'restart')
-    {
-        $route->format = "text";
-        list($scriptPath) = get_included_files();
-        $basedir = str_replace("/index.php","",$scriptPath);
-        $restart_script = "$basedir/Modules/config/restart.sh";
-        if ($redis->rpush("service-runner","$restart_script>$restart_log")){
-            $result= "service-runner trigger sent for $restart_script>$restart_log";
         } else {
-            $result= "could not send trigger";
+          echo($emonhub_logfile . " does not exist!");
+          passthru("journalctl -u emonhub --no-pager");        
         }
-        return $result;
-        
+        exit;
     }
 
     return array('content'=>$result);
