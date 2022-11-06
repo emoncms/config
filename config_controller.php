@@ -73,7 +73,8 @@ function config_controller()
             if ($fh = fopen($emonhub_logfile,'r')) {
                 
                 if ($start_pos==0) {
-                    $start_pos = $size-10000;
+                    $start_pos = $size-100000;
+                    if ($start_pos<0) $start_pos = 0;
                     // Find first new line
                     fseek($fh,$start_pos);
                     $result = fread($fh,1000);
