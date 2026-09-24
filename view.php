@@ -14,11 +14,7 @@ $log_levels = array(
 section {
     position: relative;
 }
-.dropdown-menu-right {
-    right: 0 !important;
-    left: initial;
-}
-.log { padding:20px}
+.log { padding:20px; box-sizing:content-box }
 
 </style>
   <?php if(!empty($tabs)) echo $tabs ?>
@@ -26,7 +22,7 @@ section {
   <h2>EmonHub</h2>
   Emonhub provides the interface between hardware and emoncms inputs. Read from serial, spi, modbus, mbus and more.
   <br><br>
-  <div class="input-prepend input-append" style="float:right">
+  <div class="input-group" style="float:right">
       <button class="btn btn-info" id="show-emonhublogview">View log</button>
       <button class="btn btn-danger" id="show-editor">Edit config</button>
       <button class="btn btn-warning" id="restart">Restart</button>
@@ -40,27 +36,26 @@ section {
   </div>
 
   <div id="emonhublogview" style="display:none">
-      <div class="input-prepend input-append">
-          <span class="add-on">Auto update</span>
+      <div class="input-group">
+          <span class="input-group-text">Auto update</span>
           <button class="btn auto-update-toggle btn-success">ON</button>
       </div>
-      <div class="input-prepend input-append">
-          <span class="add-on">Auto scroll</span>
+      <div class="input-group">
+          <span class="input-group-text">Auto scroll</span>
           <button class="btn auto-scroll-toggle btn-success">ON</button>
       </div>
       <section>
         <h4>Log:</h4>
         <pre id="emonhub-console-log" class="log" style="height:600px"></pre>
         <div id="log-level" class="dropup dropdown">
-            <a class="btn btn-small dropdown-toggle btn-inverse text-uppercase" data-toggle="dropdown" href="#" title="Change the logging level">
+            <a class="btn btn-sm dropdown-toggle btn-dark text-uppercase" data-bs-toggle="dropdown" href="#" title="Change the logging level">
             <span class="log-level-name">Log Level: <?php echo $level ?></span>
-            <span class="caret"></span>
             </a>
-            <ul class="dropdown-menu dropdown-menu-right">
+            <ul class="dropdown-menu dropdown-menu-end">
             <?php
             if(!empty($log_levels)): foreach($log_levels as $_level=>$name):
                 $active = $level == $name ? ' active': '';
-                printf('<li><a href="#" data-key="%s" class="btn%s">%s</a></li>', $_level, $active, $name);
+                printf('<li><a href="#" data-key="%s" class="btn btn-default w-100%s">%s</a></li>', $_level, $active, $name);
             endforeach; endif;
             ?>
             </ul>
