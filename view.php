@@ -30,7 +30,7 @@ section {
 
   <div id="editor">
       <h4>Config:</h4>
-      <textarea id="configtextarea" style="width:100%; height:400px"></textarea><br>
+      <textarea id="configtextarea" class="form-control mb-2" style="height:400px"></textarea><br>
       <button class="btn btn-warning" id="save">Save</button><br><br>
       <a href="https://github.com/openenergymonitor/emonhub/blob/emon-pi/configuration.md" target="_blank">EmonHub Config Documentation</a>
   </div>
