@@ -19,7 +19,9 @@ section {
 </style>
   <?php if(!empty($tabs)) echo $tabs ?>
 
-  <h2>EmonHub</h2>
+  <div class="page-header">
+    <h3>EmonHub</h3>
+  </div>
   Emonhub provides the interface between hardware and emoncms inputs. Read from serial, spi, modbus, mbus and more.
   <br><br>
   <div class="input-group" style="float:right">
