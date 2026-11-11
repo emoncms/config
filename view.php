@@ -9,8 +9,8 @@ load_css("Modules/config/Views/config_view.css");
         <h3>EmonHub</h3>
         <div class="cfg-page-actions">
             <div class="btn-group cfg-views" role="group" aria-label="View">
-                <button class="btn btn-default" id="show-emonhublogview">Log</button>
-                <?php if ($admin) { ?><button class="btn btn-default" id="show-configview">Configure</button><?php } ?>
+                <button class="btn btn-default" id="show-emonhublogview"><span class="svg-icon-list"></span> Log</button>
+                <?php if ($admin) { ?><button class="btn btn-default" id="show-configview"><span class="svg-icon-cog"></span> Configure</button><?php } ?>
             </div>
             <button class="btn btn-warning" id="restart">Restart</button>
         </div>
@@ -71,7 +71,7 @@ load_css("Modules/config/Views/config_view.css");
             </section>
             <div class="cfg-panel-footer">
                 <a href="https://github.com/openenergymonitor/emonhub" target="_blank">EmonHub documentation</a>
-                <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-default">Download log</a>
+                <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-primary"><span class="svg-icon-download"></span> Download log</a>
             </div>
         </div>
     </div>
