@@ -35,21 +35,19 @@ var HUB_SETTINGS = { loglevel: "WARNING", autoconf: 1, use_syslog: "yes", log_ba
 var NODE_SETTINGS = { nodename: "" };
 // Descriptions of settings that emonhub accepts but does not act on
 var NO_EFFECT = /^(Currently has no effect|Set from init_settings, changing it here has no effect|Only used in autoconf templates)/;
-// Descriptions for emonhub versions without settings_info in the source
-var FALLBACK_DESC = typeof SETTING_DESCRIPTIONS !== "undefined" ? SETTING_DESCRIPTIONS : { common: {}, hub: {}, node: {}, rx: {}, tx: {}, types: {} };
+// Descriptions from settings_info in the emonhub source.
+// Older emonhub versions have none, settings then show without a description.
 
 // Descriptions of a group: common, hub, node, rx or tx
 function desc_group(name) {
     var d = store.settings && store.settings.descriptions;
-    if (d && d[name] && Object.keys(d[name]).length) return d[name];
-    return FALLBACK_DESC[name] || {};
+    return (d && d[name]) || {};
 }
 
 // Descriptions of an interfacer type, split into init and runtime
 function desc_type(type, type_settings) {
     var d = type_settings && type_settings.descriptions;
-    if (d && (Object.keys(d.init || {}).length || Object.keys(d.runtime || {}).length)) return d;
-    return FALLBACK_DESC.types[type] || { init: {}, runtime: {} };
+    return { init: (d && d.init) || {}, runtime: (d && d.runtime) || {} };
 }
 var RX_SETTINGS = { names: "", datacodes: "", datacode: "h", scales: "", scale: "1", units: "", whitening: "" };
 var TX_SETTINGS = { names: "", datacodes: "", datacode: "h", scales: "", scale: "1", units: "" };

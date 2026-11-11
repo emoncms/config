@@ -2,7 +2,6 @@
     defined('EMONCMS_EXEC') or die('Restricted access');
     load_js("Lib/js/vue.global.prod-3.5.22.min.js");
     load_js("Modules/config/Views/emonhub_conf.js");
-    load_js("Modules/config/Views/setting_descriptions.js");
     load_css("Modules/config/Views/config_ui.css");
 ?>
 
