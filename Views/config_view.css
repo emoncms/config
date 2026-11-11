@@ -47,10 +47,19 @@
 .cfg-page .cfg-textarea:focus { box-shadow: inset 0 0 0 2px rgba(var(--bs-primary-rgb), 0.35); }
 
 /* Log */
+#emonhublogview .panel-header { flex-wrap: wrap; }
 #emonhublogview .panel-header .input-group { width: auto; margin-bottom: 0; }
+#emonhublogview .log-filter { width: 220px; margin-bottom: 0; }
+.log.log-filtered:empty::before { content: attr(data-empty); opacity: 0.6; }
 #emonhublogview .panel-header .input-group-text { font-size: var(--font-xs); }
 .log-section { position: relative; }
 .log-section .log { margin: 0; padding: 20px; box-sizing: content-box; border: 0; border-radius: 0; }
+.log-section .log { height: 600px; white-space: pre; overflow-x: auto; }
+
+/* Log card expanded to the window, height is set in view.php */
+body.log-expanded main.content-container:has(.panel-page) { max-width: none; }
+body.log-expanded .log-section .log { box-sizing: border-box; }
+body.log-expanded .panel-page { padding-bottom: 0; }
 
 /* Log level selector, in the log colours */
 .log-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; background-color: #adb5bd; }

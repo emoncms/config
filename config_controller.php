@@ -111,6 +111,9 @@ function config_controller()
             $start_pos = (int) $_GET['pos'];
             if ($start_pos<0) $start_pos = 0;
         }
+
+        $filter = isset($_GET['filter']) ? trim($_GET['filter']) : "";
+        if ($filter !== "") return emonhub_log_filter($emonhub_logfile, $start_pos, $filter);
         
         if (file_exists($emonhub_logfile)) {
             $size = filesize($emonhub_logfile);
@@ -141,6 +144,11 @@ function config_controller()
         return "0\nemonhub.log does not exist";
     }
     
+    else if ($route->action == 'loginfo') {
+        $route->format = "json";
+        return emonhub_log_info($emonhub_logfile);
+    }
+
     else if ($route->action == 'set' && isset($_POST['config'])) {
         $route->format = "json";
         if (empty($session['admin'])) return array('success' => false, 'message' => "Admin access required");
@@ -190,6 +198,56 @@ function config_controller()
     }
 
     return array('content'=>$result);
+}
+
+// Size of the log and time of the first and last entry
+function emonhub_log_info($file)
+{
+    $info = array('size' => 0, 'start' => "", 'end' => "");
+    if (!file_exists($file) || !($fh = fopen($file, 'r'))) return $info;
+    $info['size'] = filesize($file);
+    $ts = '/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/m';
+
+    $head = fread($fh, 4096);
+    if (preg_match($ts, $head, $m)) $info['start'] = $m[1];
+
+    fseek($fh, max(0, $info['size'] - 8192));
+    $tail = fread($fh, 8192);
+    if (preg_match_all($ts, $tail, $m)) $info['end'] = end($m[1]);
+
+    fclose($fh);
+    return $info;
+}
+
+// Log lines that contain $filter, read from byte $start_pos (0 for the whole file).
+// First line of the result is the position to read from next.
+function emonhub_log_filter($file, $start_pos, $filter, $max_lines = 2000)
+{
+    if (!file_exists($file) || !($fh = fopen($file, 'r'))) return "0\nemonhub.log does not exist";
+    // Log rotated since the last read
+    if ($start_pos > filesize($file)) $start_pos = 0;
+    fseek($fh, $start_pos);
+
+    $pos = $start_pos;
+    $lines = array();
+    $count = 0;
+    while (($line = fgets($fh)) !== false) {
+        // Partial last line is read on the next call
+        if (substr($line, -1) !== "\n") break;
+        $pos += strlen($line);
+        if (stripos($line, $filter) === false) continue;
+        $lines[] = $line;
+        $count++;
+        if (count($lines) > 2 * $max_lines) $lines = array_slice($lines, -$max_lines);
+    }
+    fclose($fh);
+
+    $result = $pos."\n";
+    if ($count > $max_lines) {
+        $lines = array_slice($lines, -$max_lines);
+        $result .= "... last $max_lines of $count matching lines\n";
+    }
+    return $result.implode("", $lines);
 }
 
 // Check config text parses as emonhub reads it.

@@ -44,6 +44,7 @@ load_css("Modules/config/Views/config_view.css");
             <div class="panel-header panel-header-static">
                 <span class="panel-accent"></span>
                 <span class="panel-name">emonhub.log</span>
+                <input type="search" class="form-control form-control-sm log-filter" placeholder="Filter whole log" aria-label="Filter log">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text">Auto update</span>
                     <button class="btn btn-sm auto-update-toggle btn-success">ON</button>
@@ -52,9 +53,10 @@ load_css("Modules/config/Views/config_view.css");
                     <span class="input-group-text">Auto scroll</span>
                     <button class="btn btn-sm auto-scroll-toggle btn-success">ON</button>
                 </div>
+                <button class="btn btn-default btn-sm log-expand-toggle" title="Expand"><span class="svg-icon-expand"></span></button>
             </div>
             <section class="log-section">
-                <pre id="emonhub-console-log" class="log" style="height:600px"></pre>
+                <pre id="emonhub-console-log" class="log" data-empty="No matching lines"></pre>
                 <div id="log-level" class="dropup dropdown">
                     <a class="btn dropdown-toggle btn-dark text-uppercase" data-bs-toggle="dropdown" href="#" title="Change the logging level">
                     <span class="log-dot level-<?php echo strtolower($level) ?>"></span>Log Level: <strong class="log-level-name"><?php echo $level ? $level : "UNKNOWN" ?></strong>
@@ -71,7 +73,7 @@ load_css("Modules/config/Views/config_view.css");
             </section>
             <div class="cfg-panel-footer">
                 <a href="https://github.com/openenergymonitor/emonhub" target="_blank">EmonHub documentation</a>
-                <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-primary"><span class="svg-icon-download"></span> Download log</a>
+                <a href="<?php echo $path; ?>config/downloadlog" class="btn btn-primary"><span class="svg-icon-download"></span> Download log<span class="log-info"></span></a>
             </div>
         </div>
     </div>
@@ -84,6 +86,9 @@ const logdiv = document.getElementById("emonhub-console-log")
 
 var autoupdate = true;
 var auto_scroll = true;
+var log_filter = "";
+var log_filter_timer = false;
+var loginfo_updater = false;
 
 // Configure views are for admin users only
 var has_config = typeof config_ui !== "undefined";
@@ -177,6 +182,49 @@ $("#show-form").click(function(){ show_view("config"); });
 $("#show-configview").click(function(){ show_view("config"); });
 $("#show-emonhublogview").click(function(){ show_view("log"); });
 
+// Server filters the whole log file, then new lines as they arrive
+$(".log-filter").on("input", function() {
+    clearTimeout(log_filter_timer);
+    var filter = $(this).val().trim();
+    log_filter_timer = setTimeout(function() {
+        if (filter == log_filter) return;
+        log_filter = filter;
+        logfile_position = 0;
+        logdiv.textContent = "";
+        $(logdiv).toggleClass("log-filtered", filter != "");
+        emonhublog_refresh();
+    }, 300);
+});
+
+// Log card uses the full width and height of the window
+var log_expanded = false;
+
+function set_log_expanded(on) {
+    log_expanded = on;
+    $("body").toggleClass("log-expanded", on);
+    $(".log-expand-toggle").attr("title", on ? "Collapse" : "Expand")
+        .find("span").attr("class", on ? "svg-icon-contract" : "svg-icon-expand");
+    size_log();
+    if (auto_scroll) {
+        logdiv.scrollTop = logdiv.scrollHeight;
+        last_set_height = logdiv.scrollTop;
+    }
+}
+
+// Height that fits the log and footer in the window
+function size_log() {
+    if (!log_expanded) {
+        logdiv.style.height = "";
+        return;
+    }
+    var top = logdiv.getBoundingClientRect().top + window.scrollY;
+    var footer = $("#emonhublogview .cfg-panel-footer").outerHeight();
+    logdiv.style.height = Math.max(300, window.innerHeight - top - footer - 16) + "px";
+}
+
+$(".log-expand-toggle").click(function() { set_log_expanded(!log_expanded); });
+$(window).resize(size_log);
+
 $("#emonhub-console-log").scroll(function() {
 
     if (auto_scroll) {
@@ -185,7 +233,7 @@ $("#emonhub-console-log").scroll(function() {
             auto_scroll_button(auto_scroll);
         }
     } else {
-        if (((logdiv.scrollHeight-logdiv.scrollTop)-640)<20) {
+        if ((logdiv.scrollHeight-logdiv.scrollTop-logdiv.clientHeight)<20) {
             auto_scroll = true;
             auto_scroll_button(auto_scroll);
         }
@@ -196,20 +244,45 @@ $("#emonhub-console-log").scroll(function() {
 function enable_autoupdate() {
     autoupdate = true;
     clearInterval(emonhublog_updater);
+    clearInterval(loginfo_updater);
     emonhublog_updater = setInterval(emonhublog_refresh,1000);
+    loginfo_updater = setInterval(loginfo_refresh,10000);
+    loginfo_refresh();
 }
 
 function disable_autoupdate() {
     autoupdate = false;
     clearInterval(emonhublog_updater);
+    clearInterval(loginfo_updater);
+}
+
+// Log file size and time range
+function loginfo_refresh() {
+    $.ajax({ url: path+"config/loginfo", dataType: 'json', success: function(info) {
+        var text = format_size(info.size);
+        if (info.start && info.end) {
+            var days = (new Date(info.end.replace(" ","T")) - new Date(info.start.replace(" ","T"))) / 86400000;
+            text += ", "+days.toFixed(1)+" days";
+        }
+        $(".log-info").text(" ("+text+")");
+    }});
+}
+
+function format_size(bytes) {
+    if (bytes < 1024) return bytes+" B";
+    if (bytes < 1048576) return (bytes/1024).toFixed(0)+" KB";
+    return (bytes/1048576).toFixed(1)+" MB";
 }
 
 function emonhublog_refresh()
 {
+    var filter = log_filter;
     $.ajax({
-        url: path+"config/getemonhublog?pos="+logfile_position,
+        url: path+"config/getemonhublog?pos="+logfile_position+"&filter="+encodeURIComponent(filter),
         dataType: 'text', async: true,
         success: function(data) {
+            // Filter changed while this request was running
+            if (filter != log_filter) return;
             var firstnewline = data.indexOf("\n");
             logfile_position = parseInt(data.substr(0, firstnewline));
             data = data.substr(firstnewline+1,data.length);
