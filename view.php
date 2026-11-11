@@ -1,20 +1,21 @@
-<?php 
-global $path; 
-
-$level = "DEBUG";
-$log_levels = array(
-    1=>"DEBUG",
-    2=>"INFO",
-    3=>"WARNING",
-    4=>"ERROR",
-    5=>"CRITICAL"
-);
+<?php
+global $path;
 ?>
 <style>
 section {
     position: relative;
 }
 .log { padding:20px; box-sizing:content-box }
+.log-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; background-color:#adb5bd }
+.log-dot.level-debug { background-color:#198754 }
+.log-dot.level-info { background-color:#0d6efd }
+.log-dot.level-warning { background-color:#ffc107 }
+.log-dot.level-error { background-color:#dc3545 }
+.log-dot.level-critical { background-color:#842029 }
+#log-level .dropdown-menu a { text-align:left }
+#log-level { right:12px; bottom:12px }
+#log-level > .btn { border:1px solid #6c757d; box-shadow:0 2px 6px rgba(0,0,0,0.4) }
+#log-level > .btn .log-dot { width:12px; height:12px; vertical-align:-1px }
 
 </style>
   <?php if(!empty($tabs)) echo $tabs ?>
@@ -50,15 +51,15 @@ section {
         <h4>Log:</h4>
         <pre id="emonhub-console-log" class="log" style="height:600px"></pre>
         <div id="log-level" class="dropup dropdown">
-            <a class="btn btn-sm dropdown-toggle btn-dark text-uppercase" data-bs-toggle="dropdown" href="#" title="Change the logging level">
-            <span class="log-level-name">Log Level: <?php echo $level ?></span>
+            <a class="btn dropdown-toggle btn-dark text-uppercase" data-bs-toggle="dropdown" href="#" title="Change the logging level">
+            <span class="log-dot level-<?php echo strtolower($level) ?>"></span>Log Level: <strong class="log-level-name"><?php echo $level ? $level : "UNKNOWN" ?></strong>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
             <?php
-            if(!empty($log_levels)): foreach($log_levels as $_level=>$name):
-                $active = $level == $name ? ' active': '';
-                printf('<li><a href="#" data-key="%s" class="btn btn-default w-100%s">%s</a></li>', $_level, $active, $name);
-            endforeach; endif;
+            foreach ($log_levels as $name) {
+                $active = $level == $name ? ' active' : '';
+                printf('<li><a href="#" data-level="%s" class="btn btn-default w-100%s"><span class="log-dot level-%s"></span>%s</a></li>', $name, $active, strtolower($name), $name);
+            }
             ?>
             </ul>
         </div>
@@ -79,11 +80,6 @@ const logdiv = document.getElementById("emonhub-console-log")
 
 var autoupdate = true;
 var auto_scroll = true;
-
-var log_level = "DEBUG";
-var log_levels = <?php echo json_encode($log_levels); ?>;
-
-var downloaded_log = "";
 
 $("#emonhublogview").show();
 $("#editor").hide();
@@ -171,30 +167,6 @@ function disable_autoupdate() {
     clearInterval(emonhublog_updater);
 }
 
-function filter_log_level(data_in, level) {
-  if (level=="DEBUG") return data_in;
-  var filter = [];
-  if (level=="INFO") filter = ["INFO","WARNING","ERROR","CRITICAL"];
-  if (level=="WARNING") filter = ["WARNING","ERROR","CRITICAL"];
-  if (level=="ERROR") filter = ["ERROR","CRITICAL"];
-  if (level=="CRITICAL") filter = ["CRITICAL"];
-  
-  var lines_in = data_in.split("\n");
-  
-  if (lines_in.length==1 && lines_in[0]=="") return "";
-  
-  var lines_out = [];
-  for (var z=0; z<lines_in.length; z++) {
-    for (var f in filter) {
-      if (lines_in[z].indexOf(filter[f])!=-1) {
-        lines_out.push(lines_in[z]);
-      }
-    }
-  }
-  if (lines_out.length==0) return "";
-  return lines_out.join("\n")+"\n";
-}
-
 function emonhublog_refresh()
 {
     $.ajax({
@@ -204,9 +176,7 @@ function emonhublog_refresh()
             var firstnewline = data.indexOf("\n");
             logfile_position = parseInt(data.substr(0, firstnewline));
             data = data.substr(firstnewline+1,data.length);
-            
-            downloaded_log += data;
-            logdiv.textContent += filter_log_level(data,log_level);
+            logdiv.textContent += data;
             
             if (auto_scroll) {
                 logdiv.scrollTop = logdiv.scrollHeight;
@@ -217,50 +187,26 @@ function emonhublog_refresh()
 }
 
 
-$(function(){
-    $('#log-level ul li a').click(function(event){
-        event.preventDefault();
-        var $btn = $(this);
-        var $toggle = $btn.parents('ul').prev('.btn');
-        var key = $btn.data('key');
-       
-        $toggle.find('.log-level-name').text(gettext('log level: %s').replace('%s',log_levels[""+key]));
-        $btn.addClass('active');
-        $btn.parents('li').siblings().find('a').removeClass('active');
-        
-        log_level = log_levels[""+key];
-        
-        logdiv.textContent = filter_log_level(downloaded_log,log_level);
-        
-        if (auto_scroll) {
-            logdiv.scrollTop = logdiv.scrollHeight;
-            last_set_height = logdiv.scrollTop;
+$('#log-level ul li a').click(function(event){
+    event.preventDefault();
+    var $btn = $(this);
+    var level = $btn.data('level');
+    $.ajax({ type: "POST", url: path+"config/setloglevel", data: { level: level }, dataType: 'json', success: function(result) {
+        if (!result.success) {
+            alert(result.message);
+            return;
         }
-    })
-})
-
-/**
- * emulate the php gettext function for replacing php strings in js
- */
-function gettext(property) {
-        _strings = typeof translations === 'undefined' ? getTranslations() : translations;
-    if (_strings.hasOwnProperty(property)) {
-        return _strings[property];
-    } else {
-        return property;
-    }
-}
-/**
- * return object of gettext translated strings
- *
- * @return object
- */
-function getTranslations(){
-    return {
-        'Log level: %s': "<?php echo _('Log level: %s') ?>",
-        'Error sending data': "<?php echo _('Error sending data') ?>"
-    }
-}
+        $('#log-level .log-level-name').text(level);
+        $('#log-level > a .log-dot').attr('class', 'log-dot level-'+level.toLowerCase());
+        $('#log-level ul li a').removeClass('active');
+        $btn.addClass('active');
+        // Keep editor in sync with the updated config
+        $.ajax({ url: path+"config/get", dataType: 'text', success: function(data) {
+            config = data;
+            $("#configtextarea").val(config);
+        }});
+    }});
+});
 
 function auto_update_button(state) {
     if (state==true) {
