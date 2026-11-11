@@ -1,6 +1,7 @@
 <?php
 global $path;
 load_css("Modules/config/Views/config_view.css");
+load_js("Lib/js/vue.global.prod-3.5.22.min.js");
 ?>
 <?php if(!empty($tabs)) echo $tabs ?>
 
@@ -40,6 +41,38 @@ load_css("Modules/config/Views/config_view.css");
     <?php } ?>
 
     <div id="emonhublogview" style="display:none">
+        <div class="panel log-summary" id="log-summary" v-cloak>
+            <div class="panel-header panel-header-static">
+                <span class="panel-accent"></span>
+                <span class="panel-name">Summary</span>
+                <span class="log-summary-run">{{ run }}</span>
+                <button class="btn btn-default btn-sm" @click="toggle">{{ hidden ? "Show" : "Hide" }}</button>
+            </div>
+            <div class="log-summary-body" v-if="!hidden && s">
+                <div class="log-summary-note" v-if="note">{{ note }}</div>
+                <div class="log-summary-interfacers">
+                    <a href="#" class="sum-interfacer" v-for="i in s.interfacers" :key="i.name" :title="'Show '+i.name+' lines in the log'" @click.prevent="filter(i.name)">
+                        <div class="sum-name"><span class="sum-dot" :class="'sum-'+i.status"></span><strong>{{ i.name }}</strong><span class="sum-type">{{ i.type }}</span></div>
+                        <div class="sum-text">{{ i.text || "No activity logged" }}</div>
+                        <div class="sum-node" v-for="n in i.nodes" :key="n.name">Node {{ n.name }}: {{ n.frames }} frames, last {{ n.last }}<template v-if="n.rssi">, {{ n.rssi }}</template></div>
+                    </a>
+                </div>
+                <ul class="log-summary-issues">
+                    <li class="sum-none" v-if="!s.issues.length && s.end">No known issues found in the log.</li>
+                    <li v-for="issue in s.issues" :class="{ 'sum-past': !is_current(issue) }">
+                        <div class="sum-issue">
+                            <span class="sum-dot" :class="'sum-'+(is_current(issue) ? issue.severity : 'past')"></span>
+                            <strong>{{ issue.title }}</strong>
+                            <span class="sum-type" v-if="issue.interfacer">{{ issue.interfacer }}</span>
+                            <span class="sum-meta">{{ issue_meta(issue) }}</span>
+                            <a href="#" class="sum-show" v-if="issue.filter" @click.prevent="filter(issue.filter)">Show in log</a>
+                        </div>
+                        <div class="sum-help" v-if="issue.help">{{ issue.help }}</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
         <div class="panel">
             <div class="panel-header panel-header-static">
                 <span class="panel-accent"></span>
@@ -247,16 +280,83 @@ function enable_autoupdate() {
     autoupdate = true;
     clearInterval(emonhublog_updater);
     clearInterval(loginfo_updater);
+    clearInterval(summary_updater);
     emonhublog_updater = setInterval(emonhublog_refresh,1000);
     loginfo_updater = setInterval(loginfo_refresh,10000);
+    summary_updater = setInterval(summary_refresh,60000);
     loginfo_refresh();
+    summary_refresh();
 }
 
 function disable_autoupdate() {
     autoupdate = false;
     clearInterval(emonhublog_updater);
     clearInterval(loginfo_updater);
+    clearInterval(summary_updater);
 }
+
+// Summary of interfacer activity and known issues
+var summary_updater = false;
+
+function summary_refresh() {
+    $.ajax({ url: path+"config/logsummary", dataType: 'json', success: function(s) { log_summary.s = s; } });
+}
+
+function format_time(ts) {
+    if (!ts) return "";
+    var today = new Date().toISOString().substr(0, 10);
+    return ts.substr(0, 10) == today ? ts.substr(11, 5) : ts.substr(0, 16);
+}
+
+var log_summary = Vue.createApp({
+    data: function() {
+        var hidden = false;
+        try { hidden = localStorage.getItem("emonhub-summary-hidden") == "1"; } catch (e) {}
+        return { s: null, hidden: hidden };
+    },
+    computed: {
+        run: function() {
+            var s = this.s;
+            if (!s) return "";
+            var run = [];
+            if (s.version) run.push("v"+s.version);
+            if (s.run_start) run.push("started "+format_time(s.run_start));
+            if (s.starts > 1) run.push(s.starts+" starts since "+format_time(s.start));
+            return run.join(" · ");
+        },
+        note: function() {
+            var s = this.s;
+            if (!s.end) return "Log is empty.";
+            if (s.level == "DEBUG" && s.age > 600) return "No log output for "+Math.round(s.age/60)+" min. EmonHub may not be running.";
+            if (s.level && s.level != "DEBUG") return "Log level is "+s.level+". Set it to DEBUG to confirm data is flowing.";
+            return "";
+        }
+    },
+    methods: {
+        toggle: function() {
+            this.hidden = !this.hidden;
+            try { localStorage.setItem("emonhub-summary-hidden", this.hidden ? "1" : "0"); } catch (e) {}
+        },
+        // Show matching lines in the log
+        filter: function(text) {
+            $(".log-filter").val(text).trigger("input");
+            logdiv.scrollIntoView({ block: "nearest" });
+        },
+        is_current: function(issue) {
+            return issue.current > 0 || !!issue.config;
+        },
+        issue_meta: function(issue) {
+            var meta = [];
+            if (issue.config) meta.push("from emonhub.conf");
+            if (issue.count) meta.push(issue.count+"×");
+            if (issue.count && issue.current < issue.count) meta.push(this.is_current(issue) ? issue.current+" since start" : "not since start");
+            if (issue.last) meta.push("last "+format_time(issue.last));
+            return meta.join(" · ");
+        }
+    },
+    // Panel height changes the space left for an expanded log
+    updated: function() { size_log(); }
+}).mount("#log-summary");
 
 // Log file size and time range
 function loginfo_refresh() {

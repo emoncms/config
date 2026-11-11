@@ -149,6 +149,12 @@ function config_controller()
         return emonhub_log_info($emonhub_logfile);
     }
 
+    else if ($route->action == 'logsummary') {
+        $route->format = "json";
+        require_once "Modules/config/log_summary.php";
+        return emonhub_log_summary($emonhub_logfile, $emonhub_config_file);
+    }
+
     else if ($route->action == 'set' && isset($_POST['config'])) {
         $route->format = "json";
         if (empty($session['admin'])) return array('success' => false, 'message' => "Admin access required");
