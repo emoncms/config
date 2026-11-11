@@ -7,7 +7,8 @@ Usage: interfacer_settings.py <emonhub src dir>
 Output: JSON {
     "common": {key: default},
     "types": {Type: {"init": {key: default}, "required": [key], "runtime": {key: default},
-                     "common": [key]}}
+                     "common": [key], "descriptions": {"init": {}, "runtime": {}}}},
+    "descriptions": {"common": {}, "hub": {}, "node": {}, "rx": {}, "tx": {}}
 }
 
 Init settings are the __init__ arguments. Runtime settings are the keys of
@@ -18,6 +19,10 @@ Common settings come from the EmonHubInterfacer base class and are not
 repeated per type. Each type lists the common settings it uses: those its own
 code reads, and those read by base class methods (run, action, flush,
 _process_rx, _process_tx) that the type reaches.
+
+Descriptions come from settings_info dicts in the emonhub source: on each
+interfacer class, on EmonHubInterfacer for common settings, and at module
+level in emonhub_setup.py for hub and node settings.
 """
 
 import ast
@@ -53,11 +58,21 @@ def dict_keys(node):
     return out
 
 
+def settings_info(body):
+    """settings_info = {...} in a class or module body, or None"""
+    for node in body:
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "settings_info" for t in node.targets):
+            value = literal(node.value)
+            return value if isinstance(value, dict) else None
+    return None
+
+
 def read_class(cls):
     # copied: keys written straight into self._settings, often init arguments
     # methods: methods defined, calls: self.method() calls, reads: setting keys read
     info = {"bases": [], "init": None, "required": [], "runtime": {}, "copied": {},
-            "methods": set(), "extends": set(), "calls": set(), "reads": set()}
+            "methods": set(), "extends": set(), "calls": set(), "reads": set(),
+            "descriptions": settings_info(cls.body) or {}}
     for base in cls.bases:
         if isinstance(base, ast.Name):
             info["bases"].append(base.id)
@@ -216,6 +231,14 @@ def main():
             used.add("batchsize")
         return sorted(used)
 
+    def descriptions_of(name):
+        """Descriptions of a type, inherited from base classes"""
+        out = {"init": {}, "runtime": {}}
+        for c in reversed([c for c in chain(name) if c != BASE]):
+            for part in out:
+                out[part].update(classes[c]["descriptions"].get(part, {}))
+        return out
+
     base = resolve(BASE)
     common = dict(base["copied"])
     common.update(base["runtime"])
@@ -233,8 +256,15 @@ def main():
                 if key in common and result["runtime"][key] == common[key]:
                     del result["runtime"][key]
             result["common"] = common_used(name, common)
+            result["descriptions"] = descriptions_of(name)
             types[name] = result
-    json.dump({"common": common, "types": types}, sys.stdout, default=str)
+    descriptions = {"common": classes.get(BASE, {}).get("descriptions", {}).get("runtime", {})}
+    try:
+        with open(os.path.join(src, "emonhub_setup.py")) as fh:
+            descriptions.update(settings_info(ast.parse(fh.read()).body) or {})
+    except Exception:
+        pass
+    json.dump({"common": common, "types": types, "descriptions": descriptions}, sys.stdout, default=str)
 
 
 if __name__ == "__main__":

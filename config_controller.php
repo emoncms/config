@@ -231,6 +231,7 @@ function emonhub_interfacer_settings($src)
     $files = glob("$src/interfacers/*.py");
     if (!$files) return null;
     $files[] = "$src/emonhub_interfacer.py";
+    $files[] = "$src/emonhub_setup.py";
     $files[] = $script;
     $signature = md5(implode(",", array_map('filemtime', $files)));
 

@@ -35,7 +35,22 @@ var HUB_SETTINGS = { loglevel: "WARNING", autoconf: 1, use_syslog: "yes", log_ba
 var NODE_SETTINGS = { nodename: "" };
 // Descriptions of settings that emonhub accepts but does not act on
 var NO_EFFECT = /^(Currently has no effect|Set from init_settings, changing it here has no effect|Only used in autoconf templates)/;
-var DESC = typeof SETTING_DESCRIPTIONS !== "undefined" ? SETTING_DESCRIPTIONS : { common: {}, hub: {}, node: {}, rx: {}, tx: {}, types: {} };
+// Descriptions for emonhub versions without settings_info in the source
+var FALLBACK_DESC = typeof SETTING_DESCRIPTIONS !== "undefined" ? SETTING_DESCRIPTIONS : { common: {}, hub: {}, node: {}, rx: {}, tx: {}, types: {} };
+
+// Descriptions of a group: common, hub, node, rx or tx
+function desc_group(name) {
+    var d = store.settings && store.settings.descriptions;
+    if (d && d[name] && Object.keys(d[name]).length) return d[name];
+    return FALLBACK_DESC[name] || {};
+}
+
+// Descriptions of an interfacer type, split into init and runtime
+function desc_type(type, type_settings) {
+    var d = type_settings && type_settings.descriptions;
+    if (d && (Object.keys(d.init || {}).length || Object.keys(d.runtime || {}).length)) return d;
+    return FALLBACK_DESC.types[type] || { init: {}, runtime: {} };
+}
 var RX_SETTINGS = { names: "", datacodes: "", datacode: "h", scales: "", scale: "1", units: "", whitening: "" };
 var TX_SETTINGS = { names: "", datacodes: "", datacode: "h", scales: "", scale: "1", units: "" };
 
@@ -441,7 +456,7 @@ var InterfacerCard = {
             if (!this.type_settings || !this.init_settings) return true;
             return Object.keys(this.type_settings.init).length > 0 || Conf.settings(this.init_settings).length > 0;
         },
-        type_desc: function () { return DESC.types[this.type] || { init: {}, runtime: {} }; },
+        type_desc: function () { return desc_type(this.type, this.type_settings); },
         init_schema: function () {
             return this.type_settings ? [{ label: this.short_type, settings: this.type_settings.init, descriptions: this.type_desc.init }] : null;
         },
@@ -449,8 +464,8 @@ var InterfacerCard = {
             if (!this.type_settings) return null;
             var common = used_common(this.type_settings);
             return [
-                { label: this.short_type, settings: this.type_settings.runtime, descriptions: Object.assign({}, DESC.common, this.type_desc.runtime) },
-                { label: "General", settings: common, descriptions: DESC.common }
+                { label: this.short_type, settings: this.type_settings.runtime, descriptions: Object.assign({}, desc_group("common"), this.type_desc.runtime) },
+                { label: "General", settings: common, descriptions: desc_group("common") }
             ];
         },
         missing_required: function () {
@@ -507,10 +522,10 @@ var InputsTable = {
         return { labels: { names: "Name", datacodes: "Datacode", scales: "Scale", units: "Unit" }, datacodes: DATACODES };
     },
     computed: {
-        col_desc: function () { return DESC[this.section.name] || {}; },
+        col_desc: function () { return desc_group(this.section.name); },
         schema: function () {
-            if (this.section.name == "rx") return [{ label: "rx", settings: RX_SETTINGS, descriptions: DESC.rx }];
-            if (this.section.name == "tx") return [{ label: "tx", settings: TX_SETTINGS, descriptions: DESC.tx }];
+            if (this.section.name == "rx") return [{ label: "rx", settings: RX_SETTINGS, descriptions: desc_group("rx") }];
+            if (this.section.name == "tx") return [{ label: "tx", settings: TX_SETTINGS, descriptions: desc_group("tx") }];
             return null;
         },
         columns: function () {
@@ -611,7 +626,7 @@ var NodeCard = {
         nodename: function () { return Conf.unquote(Conf.get(this.section, "nodename", "")); },
         rx: function () { return Conf.child(this.section, "rx"); },
         tx: function () { return Conf.child(this.section, "tx"); },
-        node_schema: function () { return [{ label: "Node", settings: NODE_SETTINGS, descriptions: DESC.node }]; },
+        node_schema: function () { return [{ label: "Node", settings: NODE_SETTINGS, descriptions: desc_group("node") }]; },
         rx_count: function () { return Conf.parse_list(Conf.get(this.rx, "names")).length; },
         summary: function () {
             var names = Conf.parse_list(Conf.get(this.rx, "names"));
@@ -662,7 +677,6 @@ var config_ui = Vue.createApp({
             errors: [],
             tab: "interfacers",
             store: store,
-            hub_schema: [{ label: "Hub", settings: HUB_SETTINGS, descriptions: DESC.hub }],
             saving: false,
             message: null,
             error: null,
@@ -673,6 +687,7 @@ var config_ui = Vue.createApp({
     },
     computed: {
         types: function () { return store.types; },
+        hub_schema: function () { return [{ label: "Hub", settings: HUB_SETTINGS, descriptions: desc_group("hub") }]; },
         examples: function () { return store.examples; },
         text: function () { return this.root ? Conf.serialize(this.root) : ""; },
         dirty: function () { return this.root !== null && this.text !== this.original; },
