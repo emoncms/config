@@ -1,0 +1,315 @@
+/* ==========================================================================
+   EmonHub config UI
+   Panels on the grey panel-page background. Colours from the theme tokens.
+   ========================================================================== */
+
+/* -- 1. Tabs and lead ------------------------------------------------------ */
+
+.cfg-tabs { margin-bottom: 1rem; border-bottom-color: var(--border-strong); }
+.cfg-tabs .nav-link { color: var(--ec-text-secondary); display: flex; align-items: center; gap: 6px; }
+.cfg-tabs .nav-link:hover { color: var(--bs-emphasis-color); }
+.cfg-tabs .nav-link.active {
+    color: var(--bs-emphasis-color);
+    font-weight: 600;
+    background-color: var(--bs-body-bg);
+    border-color: var(--border-strong) var(--border-strong) var(--bs-body-bg);
+}
+
+.cfg-tabs .nav-link.cfg-text-link { color: var(--bs-primary); font-size: var(--font-sm); }
+.cfg-tabs .nav-link.cfg-text-link:hover { color: var(--ec-primary-darker); border-color: transparent; text-decoration: underline; }
+
+.cfg-lead { margin: 0 0 0.75rem; font-size: var(--font-sm); color: var(--ec-text-secondary); }
+
+/* -- 2. Interfacer and node panels ---------------------------------------- */
+
+.panel-page .panel.cfg-card { margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+.panel-page .panel.cfg-card.open { margin: 12px 0 14px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12); }
+
+/* Collapsed headers are white rows, the open panel has the grey header */
+.cfg-card .panel-header { flex-wrap: wrap; row-gap: 4px; background-color: var(--bs-body-bg); border-bottom-color: transparent; }
+.cfg-card .panel-header:hover { background-color: var(--ec-row-hover-bg); }
+.cfg-card.open .panel-header,
+.cfg-card.open .panel-header:hover { background-color: var(--ec-header-bg); border-bottom-color: var(--border); }
+.cfg-chevron { color: var(--ec-text-secondary); font-size: 12px; flex-shrink: 0; transition: transform 0.15s ease-in-out; }
+.cfg-card:not(.open) .cfg-chevron { transform: rotate(-90deg); }
+@media (prefers-reduced-motion: reduce) { .cfg-chevron { transition: none; } }
+
+.cfg-card-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--bs-emphasis-color);
+}
+.cfg-type { font-weight: 500; letter-spacing: 0.02em; }
+.cfg-node-id { font-family: var(--font-mono); font-weight: 600; min-width: 2.5em; }
+
+/* Main setting value beside the name, such as the serial port */
+.cfg-summary {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-xs);
+    color: var(--ec-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Channel tags: direction then channel name */
+.cfg-channels { display: flex; flex-wrap: wrap; gap: 4px; }
+.cfg-channel {
+    display: inline-flex;
+    align-items: center;
+    padding-right: 8px;
+    font-size: var(--font-2xs);
+    line-height: 1;
+    color: var(--ec-value-color);
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+.cfg-dir {
+    padding: 4px 6px;
+    margin-right: 6px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ec-text-secondary);
+    background-color: var(--bs-secondary-bg);
+    border-right: 1px solid var(--border-strong);
+}
+
+.cfg-channel.cfg-channel-unused { opacity: 0.45; text-decoration: line-through; }
+
+/* Section strip inside a panel, as panel table heads */
+.cfg-subhead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 6px 1rem;
+    font-size: var(--font-2xs);
+    font-weight: 600;
+    color: var(--ec-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background-color: var(--bs-secondary-bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+.cfg-subhead-note { font-weight: normal; text-transform: none; letter-spacing: 0; color: var(--ec-text-muted); }
+
+.cfg-card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 1rem;
+    border-top: 1px solid var(--border);
+    background-color: var(--bs-tertiary-bg);
+}
+.cfg-card-footer .cfg-delete { margin-left: auto; }
+.cfg-delete:hover { color: var(--bs-danger-text-emphasis); border-color: var(--bs-danger-border-subtle); }
+
+/* -- 3. Setting rows ------------------------------------------------------ */
+
+.cfg .panel-row { align-items: flex-start; min-height: 44px; }
+.cfg .panel-row .row-key { flex: 0 0 220px; padding-top: 5px; min-width: 0; font-size: var(--font-sm); }
+.cfg .panel-row > .row-action,
+.cfg .panel-row > .cfg-row-spacer { flex: 0 0 1em; padding-top: 7px; }
+.cfg .panel-row:hover { background-color: var(--ec-row-hover-bg); }
+
+/* Setting name: monospace in the purple pastel colour */
+.cfg-key {
+    font-family: var(--font-mono);
+    font-size: var(--font-sm);
+    color: var(--ec-purple-text-emphasis);
+    overflow-wrap: anywhere;
+}
+.cfg-unknown .cfg-key { color: var(--bs-danger-text-emphasis); text-decoration: line-through; text-decoration-thickness: 1px; }
+.cfg-unknown-note { display: block; font-size: var(--font-2xs); color: var(--bs-danger-text-emphasis); }
+.cfg .panel-row.cfg-unknown,
+.cfg .panel-row.cfg-unknown:hover { background-color: var(--bs-danger-bg-subtle); }
+
+.cfg .row-value .form-control,
+.cfg .row-value .form-select { width: 100%; }
+.cfg .row-value .input-105,
+.cfg .row-value .input-165 { width: auto; }
+.cfg-name-input { font-weight: 600; color: var(--bs-emphasis-color); }
+
+/* Help text from config comments */
+.row-note-block { margin-top: 4px; font-size: var(--font-xs); color: var(--ec-text-secondary); }
+
+.row-note-block.cfg-no-effect { color: var(--bs-warning-text-emphasis); }
+.cfg-comment { margin-top: 2px; font-family: var(--font-mono); font-size: var(--font-2xs); color: var(--ec-text-muted); }
+
+/* Values */
+.cfg-mono, .cfg-number { font-family: var(--font-mono); }
+.cfg-number { color: var(--bs-info-text-emphasis); }
+
+.cfg-switch { display: flex; align-items: center; gap: 8px; min-height: 30px; margin: 0; padding-left: 2.5em; }
+.cfg-switch .form-check-label { font-size: var(--font-sm); font-weight: 600; }
+.cfg-on { color: var(--bs-success-text-emphasis); }
+.cfg-off { color: var(--ec-text-muted); }
+
+/* Toggle chips for channels and optional settings */
+.cfg-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; }
+.cfg-chip {
+    font-size: var(--font-sm);
+    line-height: 1.2;
+    padding: 4px 12px;
+    color: var(--ec-text-secondary);
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--ec-input-border-color);
+    border-radius: 1rem;
+    cursor: pointer;
+}
+.cfg-chip:hover { border-color: var(--bs-primary); color: var(--bs-primary); }
+.cfg-chip.on {
+    color: var(--bs-primary-text-emphasis);
+    background-color: var(--bs-primary-bg-subtle);
+    border-color: var(--bs-primary-border-subtle);
+    font-weight: 600;
+}
+.cfg-chip:focus-visible { outline: 2px solid var(--bs-primary); outline-offset: 1px; }
+.cfg-optional .cfg-chip { font-family: var(--font-mono); font-size: var(--font-xs); margin: 0 6px 6px 0; }
+.cfg-optional .row-key { color: var(--ec-text-secondary); font-size: var(--font-sm); }
+
+/* Add setting row */
+.cfg .panel-row.cfg-add-row { background-color: var(--bs-tertiary-bg); }
+.cfg .panel-row.cfg-add-row .row-key { padding-top: 0; }
+.cfg .panel-row.cfg-add-row > .btn { margin-top: 1px; }
+.cfg-key-select { font-family: var(--font-mono); font-size: var(--font-sm); color: var(--ec-text-secondary); }
+
+/* -- 4. Node inputs table ------------------------------------------------- */
+
+.cfg-inputs { width: 100%; border-collapse: collapse; }
+.cfg-inputs th {
+    padding: 6px 8px;
+    font-size: var(--font-2xs);
+    font-weight: normal;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ec-text-secondary);
+    border-bottom: 1px solid var(--border);
+}
+.cfg-inputs td { padding: 4px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.cfg-inputs tbody tr:hover td { background-color: rgba(var(--bs-primary-rgb), 0.05); }
+.cfg-inputs .form-control, .cfg-inputs .form-select { width: 100%; }
+.cfg-inputs .cfg-col-index, .cfg-inputs .cfg-index { width: 44px; padding-left: 1rem; }
+.cfg-index { font-family: var(--font-mono); font-size: var(--font-xs); color: var(--ec-text-muted); font-variant-numeric: tabular-nums; }
+.cfg-col-datacodes { width: 150px; }
+.cfg-col-scales { width: 110px; }
+.cfg-col-units { width: 100px; }
+.cfg-col-actions { width: 84px; }
+.cfg-inputs .cfg-actions { white-space: nowrap; text-align: right; padding-right: 1rem; }
+.cfg-actions .row-action { margin-left: 6px; }
+.cfg-inputs tr:hover .row-action { color: var(--ec-text-secondary); }
+.cfg-inputs .row-action:hover { color: var(--bs-primary); }
+.cfg-inputs .row-action.disabled { visibility: hidden; }
+@media (hover: none) { .cfg-inputs .row-action { color: var(--ec-text-secondary); } }
+
+.cfg-cell-names { font-weight: 500; color: var(--bs-emphasis-color); }
+.cfg-cell-scales { font-family: var(--font-mono); color: var(--bs-info-text-emphasis); }
+.cfg-cell-units { color: var(--bs-success-text-emphasis); font-weight: 600; }
+
+/* Datacode by number type */
+.cfg-datacode { font-family: var(--font-mono); font-weight: 600; }
+.cfg-dc-int { color: var(--bs-info-text-emphasis); }
+.cfg-dc-uint { color: var(--bs-success-text-emphasis); }
+.cfg-dc-float { color: var(--ec-orange-text-emphasis); }
+
+.cfg-inputs .cfg-empty { padding: 1rem; color: var(--ec-text-secondary); text-align: center; }
+.cfg-table-footer { padding: 8px 1rem; border-bottom: 1px solid var(--border); }
+.cfg-mismatch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 1rem;
+    font-size: var(--font-sm);
+    color: var(--bs-warning-text-emphasis);
+    background-color: var(--bs-warning-bg-subtle);
+}
+
+/* -- 5. Add panels -------------------------------------------------------- */
+
+.panel-page .panel.cfg-add-panel { margin-top: 1rem; border: 1px dashed var(--border-strong); background-color: transparent; }
+.cfg-add-panel .panel-header { background-color: transparent; border-bottom-style: dashed; }
+.cfg-add-icon { color: var(--bs-primary); }
+.cfg-add-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; padding: 12px 1rem; }
+.cfg-add-field { flex: 1 1 220px; min-width: 0; }
+.cfg-add-field.cfg-add-narrow { flex: 0 1 120px; }
+.cfg-add-field .form-control, .cfg-add-field .form-select { width: 100%; }
+.cfg-add-field .form-label { font-size: var(--font-sm); font-weight: 600; }
+
+/* -- 6. Errors ------------------------------------------------------------ */
+
+.cfg-error { padding: 0 1rem 10px; font-size: var(--font-sm); color: var(--bs-danger-text-emphasis); }
+.cfg-nested { padding: 8px 1rem; font-size: var(--font-sm); color: var(--bs-info-text-emphasis); background-color: var(--bs-info-bg-subtle); border-top: 1px solid var(--border); }
+.cfg-notes { padding: 0 1rem 10px; font-size: var(--font-sm); color: var(--bs-info-text-emphasis); }
+.cfg-error-inline { margin-top: 4px; font-size: var(--font-xs); color: var(--bs-danger-text-emphasis); }
+
+/* -- 7. Save bar and change review ---------------------------------------- */
+
+.cfg-savebar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1rem;
+    padding: 10px 1rem;
+    background-color: var(--bs-body-bg);
+    border-radius: var(--radius-card);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.cfg-savebar.dirty {
+    position: sticky;
+    bottom: 10px;
+    z-index: 10;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+}
+.cfg-save-state { flex: 1; display: flex; align-items: center; gap: 8px; font-size: var(--font-sm); color: var(--ec-text-secondary); }
+.cfg-savebar.dirty .cfg-save-state { color: var(--bs-emphasis-color); }
+.cfg-save-dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--bs-success-text-emphasis); flex-shrink: 0; }
+.cfg-savebar.dirty .cfg-save-dot { background-color: var(--ec-btn-warning); box-shadow: 0 0 0 3px var(--bs-warning-bg-subtle); }
+.cfg-save-error { font-size: var(--font-sm); color: var(--bs-danger-text-emphasis); }
+
+.panel-page .panel.cfg-diff-panel { margin-top: 10px; }
+.panel-page .panel.cfg-conflict-panel,
+.panel-page .panel.cfg-errors-panel { margin-top: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12); }
+.cfg-conflict-panel .panel-header .cfg-accent-warning { background-color: var(--ec-btn-warning); }
+.cfg-conflict-text { padding: 10px 1rem 0; font-size: var(--font-sm); }
+.cfg-conflict-text p { margin-bottom: 8px; }
+.cfg-errors-panel .cfg-conflict-text { padding-bottom: 10px; color: var(--ec-text-secondary); }
+.cfg-error-list { margin: 10px 1rem 0 2.25rem; font-family: var(--font-mono); font-size: var(--font-sm); color: var(--bs-danger-text-emphasis); }
+.cfg-conflict-panel .cfg-card-footer .cfg-delete { margin-left: auto; }
+.cfg-diff {
+    max-height: 420px;
+    margin: 0;
+    overflow: auto;
+    padding: 8px 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background-color: var(--ec-code-bg);
+    border: 0;
+    border-radius: 0;
+}
+.cfg-diff span { display: block; padding: 0 1rem; }
+.diff-add { color: var(--bs-success-text-emphasis); background-color: var(--bs-success-bg-subtle); }
+.diff-del { color: var(--bs-danger-text-emphasis); background-color: var(--bs-danger-bg-subtle); }
+.diff-skip { color: var(--ec-text-muted); }
+
+/* -- 8. Narrow screens ---------------------------------------------------- */
+
+@media (max-width: 576px) {
+    .cfg .panel-row { flex-wrap: wrap; gap: 2px 1rem; }
+    .cfg .panel-row .row-key { flex-basis: calc(100% - 2em); padding-top: 0; }
+    .cfg .panel-row > .row-action { order: 2; }
+    .cfg .panel-row .row-value { flex-basis: 100%; order: 3; }
+    .cfg .panel-row.cfg-add-row { gap: 6px 1rem; }
+    .cfg .panel-row.cfg-add-row .row-key { flex-basis: 100%; }
+    .cfg .panel-row.cfg-add-row > .btn { order: 4; }
+    .cfg-summary { flex-basis: 100%; order: 10; }
+    .cfg-inputs { min-width: 560px; }
+}
