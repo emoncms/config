@@ -72,7 +72,7 @@ def read_class(cls):
     # methods: methods defined, calls: self.method() calls, reads: setting keys read
     info = {"bases": [], "init": None, "required": [], "runtime": {}, "copied": {},
             "methods": set(), "extends": set(), "calls": set(), "reads": set(),
-            "descriptions": settings_info(cls.body) or {}}
+            "descriptions": settings_info(cls.body) or {}, "method_reads": {}}
     for base in cls.bases:
         if isinstance(base, ast.Name):
             info["bases"].append(base.id)
@@ -83,6 +83,7 @@ def read_class(cls):
         if not isinstance(item, ast.FunctionDef):
             continue
         info["methods"].add(item.name)
+        current = set()
         # Method that calls super().<same name>() extends the base method
         for node in ast.walk(item):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == item.name \
@@ -127,17 +128,19 @@ def read_class(cls):
                 key = node.slice
                 if isinstance(key, ast.Constant) and isinstance(key.value, str):
                     info["runtime"].setdefault(key.value, None)
-                    info["reads"].add(key.value)
+                    current.add(key.value)
             # 'key' in self._x_settings
             if isinstance(node, ast.Compare) and len(node.ops) == 1 and isinstance(node.ops[0], ast.In):
                 if isinstance(node.left, ast.Constant) and isinstance(node.left.value, str) and settings_attr(node.comparators[0]):
                     info["runtime"].setdefault(node.left.value, None)
-                    info["reads"].add(node.left.value)
+                    current.add(node.left.value)
             # self._x_settings.get('key')
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "get" \
                     and settings_attr(node.func.value) and node.args \
                     and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
-                info["reads"].add(node.args[0].value)
+                current.add(node.args[0].value)
+        info["method_reads"][item.name] = current
+        info["reads"] |= current
     return info
 
 
@@ -216,20 +219,25 @@ def main():
         action_path = (run_base or "action" in calls) and not overridden("action")
         flush_path = (action_path or "flush" in calls) and not overridden("flush") and has_post
 
+        # Settings read by each base class method
+        base_reads = classes.get(BASE, {}).get("method_reads", {})
+        def read_by(method):
+            return set(base_reads.get(method, set()))
+
         used = set(k for k in reads if k in common)
         if run_base and has_read:
-            used.add("pubchannels")
+            used |= read_by("run") - {"subchannels"}
         if run_base and (overridden("add") or has_post):
             used.add("subchannels")
-        if rx or tx:
-            used.update(["datacode", "scale"])
         if rx:
-            used.add("nodelistonly")
+            used |= read_by("_process_rx")
+        if tx:
+            used |= read_by("_process_tx")
         if action_path and has_post:
-            used.update(["pause", "interval"])
+            used |= read_by("action")
         if flush_path:
-            used.add("batchsize")
-        return sorted(used)
+            used |= read_by("flush")
+        return sorted(k for k in used if k in common)
 
     def descriptions_of(name):
         """Descriptions of a type, inherited from base classes"""
