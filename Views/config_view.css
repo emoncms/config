@@ -56,8 +56,10 @@
 .log-section .log { margin: 0; padding: 20px; box-sizing: content-box; border: 0; border-radius: 0; }
 .log-section .log { height: 600px; white-space: pre; overflow-x: auto; }
 
-/* Log card expanded to the window, height is set in view.php */
-body.log-expanded main.content-container:has(.panel-page) { max-width: none; }
+/* Log view uses the full page width */
+body.log-view main.content-container:has(.panel-page) { max-width: none; }
+
+/* Log card expanded to the window height, set in view.php */
 body.log-expanded .log-section .log { box-sizing: border-box; }
 body.log-expanded .panel-page { padding-bottom: 0; }
 

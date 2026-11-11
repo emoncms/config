@@ -112,6 +112,8 @@ function show_view(name) {
     $("#emonhublogview").toggle(name == "log");
     $("#configview").toggle(name == "config");
     $("#editor").toggle(name == "editor");
+    // Log view uses the full page width
+    $("body").toggleClass("log-view", name == "log");
     if (name == "log") {
         enable_autoupdate();
         emonhublog_refresh();
